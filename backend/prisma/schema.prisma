@@ -1,0 +1,169 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["pc"]
+}
+
+model User {
+  id             String         @id @default(cuid())
+  email          String         @unique
+  passwordHash   String
+  name           String
+  role           UserRole       @default(USER)
+  plan           Plan           @default(FREE)
+  planExpiresAt  DateTime?
+  streakDays     Int            @default(0)
+  lastActiveAt   DateTime       @default(now())
+  diagnosticDone Boolean        @default(false)
+  readinessScore Int            @default(0)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  attempts       Attempt[]
+  bookmarks      Bookmark[]
+  notifications  Notification[]
+  studyPlans     StudyPlan?
+
+  @@map("users")
+  @@schema("pc")
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
+  description String
+  icon        String     @default("📊")
+  color       String     @default("#0A528A")
+  questions   Question[]
+
+  @@map("categories")
+  @@schema("pc")
+}
+
+model Question {
+  id             String     @id @default(cuid())
+  categoryId     String
+  subSkill       String
+  text           String
+  imageUrl       String?
+  options        Json
+  explanation    String
+  difficulty     Int        @default(3)
+  discrimination Float      @default(1.0)
+  timeLimit      Int        @default(60)
+  tags           String[]
+  isActive       Boolean    @default(true)
+  flagCount      Int        @default(0)
+  createdAt      DateTime   @default(now())
+  attempts       Attempt[]
+  bookmarks      Bookmark[]
+  category       Category   @relation(fields: [categoryId], references: [id])
+
+  @@map("questions")
+  @@schema("pc")
+}
+
+model Attempt {
+  id             String      @id @default(cuid())
+  userId         String
+  questionId     String
+  selectedOption String
+  isCorrect      Boolean
+  timeTaken      Int
+  confidence     Int?
+  sessionId      String?
+  mode           AttemptMode @default(PRACTICE)
+  createdAt      DateTime    @default(now())
+  question       Question    @relation(fields: [questionId], references: [id])
+  user           User        @relation(fields: [userId], references: [id])
+
+  @@map("attempts")
+  @@schema("pc")
+}
+
+model MockExam {
+  id          String    @id @default(cuid())
+  userId      String
+  title       String
+  categoryIds String[]
+  totalQ      Int
+  score       Float?
+  percentile  Float?
+  duration    Int
+  completedAt DateTime?
+  answers     Json
+  createdAt   DateTime  @default(now())
+
+  @@map("mock_exams")
+  @@schema("pc")
+}
+
+model StudyPlan {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  plan      Json
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("study_plans")
+  @@schema("pc")
+}
+
+model Bookmark {
+  id         String   @id @default(cuid())
+  userId     String
+  questionId String
+  note       String?
+  createdAt  DateTime @default(now())
+  question   Question @relation(fields: [questionId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, questionId])
+  @@map("bookmarks")
+  @@schema("pc")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+  @@schema("pc")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  CONTENT_MANAGER
+  SUPER_ADMIN
+
+  @@schema("pc")
+}
+
+enum Plan {
+  FREE
+  PREMIUM
+  ENTERPRISE
+
+  @@schema("pc")
+}
+
+enum AttemptMode {
+  DIAGNOSTIC
+  PRACTICE
+  TIMED
+  MOCK
+  REVIEW
+
+  @@schema("pc")
+}

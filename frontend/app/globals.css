@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand: #0A528A;
+  --success: #2E7D32;
+  --error: #D32F2F;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #F8F9FA;
+  color: #1A1A1A;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Smooth transitions */
+a, button { transition: all 0.15s ease; }
+
+/* Focus visible */
+:focus-visible { outline: 2px solid #0A528A; outline-offset: 2px; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }

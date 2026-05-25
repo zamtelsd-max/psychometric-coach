@@ -4,7 +4,12 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['frontend/android/**', 'frontend/capacitor.config.ts', 'frontend/out/**']
+    paths:
+      - 'frontend/android/**'
+      - 'frontend/capacitor.config.ts'
+      - 'frontend/app/**'
+      - 'frontend/lib/**'
+      - 'frontend/components/**'
 
 jobs:
   build:
@@ -29,11 +34,11 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Build Next.js
+      - name: Build Next.js (production — custom domain)
         working-directory: frontend
         run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: https://depcxnwq.gensparkclaw.com/psy-api/api/v1
+          NEXT_PUBLIC_API_URL: https://www.psychometriccoach.com/api/v1
 
       - name: Sync Capacitor
         working-directory: frontend
@@ -46,10 +51,28 @@ jobs:
       - name: Build Debug APK
         working-directory: frontend/android
         run: ./gradlew assembleDebug
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME }}
 
-      - name: Upload Debug APK
+      - name: Rename APK
+        run: |
+          cp frontend/android/app/build/outputs/apk/debug/app-debug.apk \
+             psychometric-coach.apk
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: psychometric-coach-debug-apk
-          path: frontend/android/app/build/outputs/apk/debug/*.apk
-          retention-days: 30
+          path: psychometric-coach.apk
+          retention-days: 90
+
+      - name: Deploy APK to server
+        uses: appleboy/scp-action@v0.1.7
+        if: ${{ secrets.DEPLOY_HOST != '' }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          source: psychometric-coach.apk
+          target: /var/www/psychometric-app/
+          overwrite: true

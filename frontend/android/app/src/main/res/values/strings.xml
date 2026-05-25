@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PsychometricCoach</string>
+    <string name="title_activity_main">PsychometricCoach</string>
+    <string name="package_name">com.psychometriccoach.app</string>
+    <string name="custom_url_scheme">com.psychometriccoach.app</string>
+</resources>

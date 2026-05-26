@@ -1,6 +1,171 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+
+// ── Video Showcase ─────────────────────────────────────────────────────────
+const AD_VIDEOS = [
+  {
+    src: 'https://depcxnwq.gensparkclaw.com/psychometric-app/ads/psy_ad_extended.mp4',
+    title: 'PsychometricCoach',
+    subtitle: 'Smart Adaptive Tests for Everyone',
+    tag: 'General',
+    tagColor: 'bg-brand',
+  },
+  {
+    src: 'https://depcxnwq.gensparkclaw.com/psychometric-app/ads/nurse_ad_extended.mp4',
+    title: 'For Healthcare Professionals',
+    subtitle: 'OET · IELTS · TOEFL — Pass & Work Abroad',
+    tag: 'Nurses & Doctors',
+    tagColor: 'bg-emerald-600',
+  },
+];
+
+function VideoShowcase() {
+  const [active, setActive] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [fading, setFading] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const progressRef = useRef<number>(0);
+  const rafRef = useRef<number>(0);
+  const startRef = useRef<number>(0);
+  const DURATION = 32000; // ms per video
+
+  const goTo = useCallback((idx: number) => {
+    setFading(true);
+    setTimeout(() => {
+      setActive(idx);
+      setProgress(0);
+      progressRef.current = 0;
+      startRef.current = 0;
+      setFading(false);
+    }, 600);
+  }, []);
+
+  // Progress ticker
+  useEffect(() => {
+    cancelAnimationFrame(rafRef.current);
+    startRef.current = 0;
+
+    const tick = (ts: number) => {
+      if (!startRef.current) startRef.current = ts;
+      const elapsed = ts - startRef.current;
+      const pct = Math.min(elapsed / DURATION, 1);
+      setProgress(pct);
+      progressRef.current = pct;
+      if (pct < 1) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        goTo((active + 1) % AD_VIDEOS.length);
+      }
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [active, goTo]);
+
+  // Sync video element
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.src = AD_VIDEOS[active].src;
+    v.load();
+    v.play().catch(() => {});
+  }, [active]);
+
+  const video = AD_VIDEOS[active];
+  const next = AD_VIDEOS[(active + 1) % AD_VIDEOS.length];
+
+  return (
+    <section className="py-20 px-4 bg-[#05111F] overflow-hidden">
+      <div className="max-w-6xl mx-auto">
+        {/* Heading */}
+        <div className="text-center mb-12">
+          <span className="inline-block bg-brand/20 text-brand text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest mb-4">See It In Action</span>
+          <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">Built for your journey</h2>
+          <p className="text-slate-400 text-lg">Watch how PsychometricCoach prepares candidates for every exam.</p>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-8 items-center justify-center">
+
+          {/* ── Main video player ── */}
+          <div className={`relative transition-all duration-600 ${fading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
+            style={{ transition: 'opacity 0.6s ease, transform 0.6s ease' }}>
+            {/* Glow */}
+            <div className="absolute -inset-4 bg-brand/20 rounded-3xl blur-2xl pointer-events-none" />
+            <div className="relative w-[260px] sm:w-[300px] rounded-3xl overflow-hidden shadow-2xl border border-white/10">
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover"
+                autoPlay muted playsInline
+                style={{ aspectRatio: '9/16' }}
+              />
+              {/* Overlay label */}
+              <div className="absolute top-4 left-0 right-0 flex justify-center pointer-events-none">
+                <span className={`${video.tagColor} text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg`}>
+                  {video.tag}
+                </span>
+              </div>
+              {/* Progress bar */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10">
+                <div className="h-full bg-brand transition-none rounded-full"
+                  style={{ width: `${progress * 100}%` }} />
+              </div>
+            </div>
+          </div>
+
+          {/* ── Right panel ── */}
+          <div className="flex flex-col gap-5 max-w-sm w-full">
+            {/* Current info */}
+            <div className={`transition-all duration-500 ${fading ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}>
+              <p className="text-slate-400 text-sm uppercase tracking-widest font-bold mb-2">Now playing</p>
+              <h3 className="text-2xl font-black text-white mb-1">{video.title}</h3>
+              <p className="text-slate-300 text-sm">{video.subtitle}</p>
+            </div>
+
+            {/* Thumbnail strip */}
+            <div className="flex gap-3 mt-2">
+              {AD_VIDEOS.map((v, i) => (
+                <button key={i} onClick={() => goTo(i)}
+                  className={`relative rounded-xl overflow-hidden border-2 transition-all duration-300 flex-1 ${i === active ? 'border-brand scale-105 shadow-lg shadow-brand/30' : 'border-white/10 opacity-50 hover:opacity-80'}`}
+                  style={{ aspectRatio: '9/16', minWidth: 70 }}>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#0A1628] to-[#0d2244] p-2 text-center">
+                    <span className="text-2xl mb-1">{i === 0 ? '🎯' : '🏥'}</span>
+                    <span className="text-white text-[10px] font-bold leading-tight">{v.tag}</span>
+                  </div>
+                  {i === active && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/10">
+                      <div className="h-full bg-brand" style={{ width: `${progress * 100}%`, transition: 'width 0.1s linear' }} />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Up next */}
+            <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
+              <p className="text-xs text-slate-500 uppercase tracking-widest font-bold mb-2">Up next</p>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-brand/20 flex items-center justify-center text-sm">
+                  {(active + 1) % AD_VIDEOS.length === 0 ? '🎯' : '🏥'}
+                </div>
+                <div>
+                  <p className="text-white text-sm font-bold">{next.title}</p>
+                  <p className="text-slate-400 text-xs">{next.subtitle}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <Link href="/register"
+              className="w-full bg-brand hover:bg-brand/90 text-white font-black py-4 rounded-2xl text-center text-lg transition-all shadow-lg shadow-brand/30 hover:shadow-brand/50 hover:scale-105 active:scale-95">
+              Start Free Today →
+            </Link>
+            <p className="text-slate-500 text-xs text-center">No credit card required · 30-min free trial</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 const features = [
   { icon: '🧠', title: 'Adaptive AI Engine', desc: 'Questions adjust to your skill level using Item Response Theory — always the perfect challenge.' },
@@ -233,6 +398,9 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+
+      {/* ── VIDEO SHOWCASE ── */}
+      <VideoShowcase />
 
       {/* Features */}
       <section className="py-20 px-4 bg-surface">

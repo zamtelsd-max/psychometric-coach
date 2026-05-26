@@ -24,6 +24,7 @@ function VideoShowcase() {
   const [active, setActive] = useState(0);
   const [progress, setProgress] = useState(0);
   const [fading, setFading] = useState(false);
+  const [paused, setPaused] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressRef = useRef<number>(0);
   const rafRef = useRef<number>(0);
@@ -62,13 +63,17 @@ function VideoShowcase() {
     return () => cancelAnimationFrame(rafRef.current);
   }, [active, goTo]);
 
-  // Sync video element
+  // Sync video element — key forces remount, but also try play on mount
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    v.src = AD_VIDEOS[active].src;
-    v.load();
-    v.play().catch(() => {});
+    setPaused(false);
+    const tryPlay = () => {
+      const p = v.play();
+      if (p) p.catch(() => setPaused(true));
+    };
+    if (v.readyState >= 2) { tryPlay(); }
+    else { v.addEventListener('canplay', tryPlay, { once: true }); }
   }, [active]);
 
   const video = AD_VIDEOS[active];
@@ -91,13 +96,22 @@ function VideoShowcase() {
             style={{ transition: 'opacity 0.6s ease, transform 0.6s ease' }}>
             {/* Glow */}
             <div className="absolute -inset-4 bg-brand/20 rounded-3xl blur-2xl pointer-events-none" />
-            <div className="relative w-[260px] sm:w-[300px] rounded-3xl overflow-hidden shadow-2xl border border-white/10">
+            <div className="relative w-[260px] sm:w-[300px] rounded-3xl overflow-hidden shadow-2xl border border-white/10"
+              onClick={() => { const v = videoRef.current; if (v) { v.muted = true; v.play().catch(() => {}); setPaused(false); } }}>
               <video
+                key={active}
                 ref={videoRef}
                 className="w-full h-full object-cover"
                 autoPlay muted playsInline
+                src={video.src}
                 style={{ aspectRatio: '9/16' }}
               />
+              {/* Click-to-play overlay (shown when autoplay blocked) */}
+              {paused && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer">
+                  <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center text-3xl shadow-xl">▶</div>
+                </div>
+              )}
               {/* Overlay label */}
               <div className="absolute top-4 left-0 right-0 flex justify-center pointer-events-none">
                 <span className={`${video.tagColor} text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg`}>

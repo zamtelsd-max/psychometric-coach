@@ -4,6 +4,76 @@ import { useSearchParams } from 'next/navigation';
 import { questionsApi, attemptsApi, bookmarksApi } from '../../../lib/api';
 import DiagramRenderer from '../../../components/DiagramRenderer';
 
+// ── Audio Player for Listening questions ───────────────────────────────────
+function AudioPlayer({ url, label }: { url: string; label?: string }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [playCount, setPlayCount] = useState(0);
+  const MAX_PLAYS = 2; // IELTS/TOEFL: audio played max twice
+
+  const toggle = () => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (playing) { a.pause(); setPlaying(false); }
+    else {
+      if (playCount >= MAX_PLAYS) return;
+      a.play().then(() => setPlaying(true)).catch(() => {});
+    }
+  };
+
+  const fmt = (s: number) => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+
+  return (
+    <div className="mb-4 bg-gradient-to-r from-[#0A1628] to-[#0d2244] rounded-2xl p-4 border border-brand/30">
+      <div className="flex items-center gap-3 mb-3">
+        <span className="text-xl">🎧</span>
+        <div className="flex-1">
+          <p className="text-white font-bold text-sm">{label || 'Listening Audio'}</p>
+          <p className="text-slate-400 text-xs">
+            {playCount >= MAX_PLAYS
+              ? '⚠ Maximum plays reached (×2)'
+              : `Listen carefully · ${MAX_PLAYS - playCount} play${MAX_PLAYS - playCount !== 1 ? 's' : ''} remaining`}
+          </p>
+        </div>
+        <button
+          onClick={toggle}
+          disabled={playCount >= MAX_PLAYS && !playing}
+          className={`w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-lg transition-all shadow-lg
+            ${playCount >= MAX_PLAYS ? 'bg-slate-600 cursor-not-allowed' : 'bg-brand hover:bg-brand/80 active:scale-95'}`}>
+          {playing ? '⏸' : '▶'}
+        </button>
+      </div>
+      {/* Progress bar */}
+      <div className="relative h-2 bg-white/10 rounded-full overflow-hidden cursor-pointer"
+        onClick={e => {
+          const a = audioRef.current;
+          if (!a || !duration) return;
+          const rect = (e.target as HTMLElement).getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          a.currentTime = (x / rect.width) * duration;
+        }}>
+        <div className="h-full bg-brand rounded-full transition-all" style={{ width: `${progress}%` }} />
+      </div>
+      <div className="flex justify-between text-xs text-slate-500 mt-1">
+        <span>{fmt(duration * progress / 100)}</span>
+        <span>{fmt(duration)}</span>
+      </div>
+      <audio
+        ref={audioRef}
+        src={url}
+        onTimeUpdate={() => {
+          const a = audioRef.current;
+          if (a && a.duration) setProgress((a.currentTime / a.duration) * 100);
+        }}
+        onLoadedMetadata={() => { if (audioRef.current) setDuration(audioRef.current.duration); }}
+        onEnded={() => { setPlaying(false); setPlayCount(c => c + 1); setProgress(0); if (audioRef.current) audioRef.current.currentTime = 0; }}
+      />
+    </div>
+  );
+}
+
 interface Option { id: string; text: string; isCorrect: boolean; }
 interface Question {
   id: string; text: string; options: Option[];
@@ -21,6 +91,8 @@ interface Question {
     highlightCol?: number;
     highlightRow?: number;
     text?: string;
+    audioUrl?: string;
+    audioLabel?: string;
   } | null;
   category?: { name: string; icon: string; assessmentType?: string; isFreeTrialOnly?: boolean; trialDurationMin?: number };
 }
@@ -226,6 +298,9 @@ export default function PracticePage() {
           <a href="/profile" className="underline">Upgrade</a>
         </div>
       )}
+
+      {/* Audio Player — for listening questions */}
+      {q.diagramData?.audioUrl && <AudioPlayer url={q.diagramData.audioUrl} label={q.diagramData.audioLabel} />}
 
       {/* Diagram / Chart / Passage */}
       {q.diagramData && <DiagramRenderer data={q.diagramData} />}

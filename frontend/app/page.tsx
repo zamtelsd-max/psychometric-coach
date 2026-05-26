@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { useState } from 'react';
 
 const features = [
   { icon: '🧠', title: 'Adaptive AI Engine', desc: 'Questions adjust to your skill level using Item Response Theory — always the perfect challenge.' },
@@ -13,20 +14,187 @@ const features = [
 const plans = [
   { name: 'Free', price: '$0', period: 'forever', color: 'border-gray-200', features: ['20 questions/day', '5 categories', 'Basic progress tracking', 'Mobile PWA'], cta: 'Start Free', href: '/register' },
   { name: 'Premium', price: '$9.99', period: '/month', color: 'border-brand ring-2 ring-brand', features: ['Unlimited practice', 'All 15 categories', 'Full mock exams', 'AI explanations', 'Offline mode', 'Advanced analytics'], cta: 'Start Premium', href: '/register', badge: 'Most Popular' },
-  { name: 'Enterprise', price: 'Custom', period: '', color: 'border-gray-200', features: ['Bulk seat licensing', 'Cohort analytics', 'Custom content', 'Dedicated support', 'SLA guarantee'], cta: 'Contact Us', href: 'mailto:hello@psychometriccoach.com' },
+  { name: 'Enterprise', price: 'Custom', period: '', color: 'border-gray-200', features: ['Bulk seat licensing', 'Cohort analytics', 'Custom content', 'Dedicated support', 'SLA guarantee'], cta: 'Contact Us', href: 'mailto:support@psycometriccoach.online' },
 ];
+
+// ── Live Chat Widget ───────────────────────────────────────────────────────
+function LiveChat() {
+  const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<'form' | 'chat' | 'done'>('form');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [messages, setMessages] = useState<{ from: 'user' | 'bot'; text: string }[]>([]);
+  const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const startChat = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !email.trim()) return;
+    setStep('chat');
+    setMessages([{
+      from: 'bot',
+      text: `Hi ${name}! 👋 Welcome to PsychometricCoach support. How can I help you today? You can ask about our test categories, pricing, technical issues, or share any feedback.`
+    }]);
+  };
+
+  const sendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || sending) return;
+    const userMsg = input.trim();
+    setInput('');
+    setMessages(prev => [...prev, { from: 'user', text: userMsg }]);
+    setSending(true);
+
+    // Auto-reply bot logic
+    setTimeout(() => {
+      let reply = "Thanks for your message! Our support team has been notified and will follow up at your email within 24 hours. Is there anything else I can help you with?";
+      const lower = userMsg.toLowerCase();
+      if (lower.includes('price') || lower.includes('cost') || lower.includes('plan') || lower.includes('premium')) {
+        reply = "Our Premium plan is $9.99/month with unlimited questions, all 15 categories, full mock exams, and AI explanations. We also have a forever-free plan with 20 questions/day. Would you like to upgrade?";
+      } else if (lower.includes('category') || lower.includes('question') || lower.includes('test')) {
+        reply = "We cover 15 test categories including Numerical, Verbal, Abstract, Logical, Spatial, Error Checking, Mechanical, Situational Judgement, and more — with 325+ expert questions and growing!";
+      } else if (lower.includes('android') || lower.includes('app') || lower.includes('download') || lower.includes('apk')) {
+        reply = "You can download our Android app at: https://www.psychometriccoach.com/download/ — or install it as a PWA from your browser on any device!";
+      } else if (lower.includes('password') || lower.includes('login') || lower.includes('account') || lower.includes('sign')) {
+        reply = "For account issues, please email us directly at support@psycometriccoach.online and we'll sort it out within a few hours.";
+      } else if (lower.includes('feedback') || lower.includes('suggest') || lower.includes('improve')) {
+        reply = "Thank you for your feedback! 🙏 We really appreciate it — your suggestions help us improve. Our team has been notified and will review it.";
+      }
+      setMessages(prev => [...prev, { from: 'bot', text: reply }]);
+      setSending(false);
+
+      // Send to support email via API
+      fetch(`${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'https://www.psychometriccoach.com/api'}/support/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, message: userMsg }),
+      }).catch(() => {/* silent fail */});
+    }, 1000);
+  };
+
+  const endChat = () => {
+    setStep('done');
+    setTimeout(() => {
+      setOpen(false);
+      setStep('form');
+      setName('');
+      setEmail('');
+      setMessages([]);
+    }, 3000);
+  };
+
+  return (
+    <>
+      {/* Chat Button */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-brand text-white rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-brand-dark transition-all hover:scale-105"
+        aria-label="Open live chat"
+      >
+        {open ? '✕' : '💬'}
+      </button>
+
+      {/* Chat Window */}
+      {open && (
+        <div className="fixed bottom-24 right-6 z-50 w-80 bg-white rounded-2xl shadow-xl border border-gray-200 flex flex-col overflow-hidden" style={{ maxHeight: '500px' }}>
+          {/* Header */}
+          <div className="bg-brand text-white px-4 py-3 flex items-center gap-3">
+            <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center font-black text-sm">P</div>
+            <div>
+              <div className="font-semibold text-sm">PsychometricCoach Support</div>
+              <div className="text-xs text-blue-200 flex items-center gap-1"><span className="w-2 h-2 bg-green-400 rounded-full inline-block"></span> Online · replies in minutes</div>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50" style={{ minHeight: '200px' }}>
+            {step === 'form' && (
+              <form onSubmit={startChat} className="space-y-3">
+                <p className="text-sm text-gray-600">👋 Hi there! Before we start, please tell us who you are.</p>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 block mb-1">Your Name</label>
+                  <input
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder="John Banda"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 block mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand"
+                    required
+                  />
+                </div>
+                <button type="submit" className="w-full bg-brand text-white font-semibold py-2 rounded-lg text-sm hover:bg-brand-dark transition-colors">
+                  Start Chat →
+                </button>
+              </form>
+            )}
+
+            {step === 'chat' && messages.map((m, i) => (
+              <div key={i} className={`flex ${m.from === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[80%] px-3 py-2 rounded-xl text-sm ${m.from === 'user' ? 'bg-brand text-white rounded-br-none' : 'bg-white border border-gray-200 text-gray-700 rounded-bl-none'}`}>
+                  {m.text}
+                </div>
+              </div>
+            ))}
+
+            {sending && (
+              <div className="flex justify-start">
+                <div className="bg-white border border-gray-200 px-3 py-2 rounded-xl text-sm text-gray-400 animate-pulse">Typing…</div>
+              </div>
+            )}
+
+            {step === 'done' && (
+              <div className="text-center py-6">
+                <div className="text-4xl mb-2">✅</div>
+                <p className="text-sm text-gray-600 font-medium">Thanks for reaching out!</p>
+                <p className="text-xs text-gray-400 mt-1">We&apos;ll follow up at {email}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Input */}
+          {step === 'chat' && (
+            <div className="border-t border-gray-100 p-3 bg-white">
+              <form onSubmit={sendMessage} className="flex gap-2">
+                <input
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  placeholder="Type a message…"
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand"
+                  disabled={sending}
+                />
+                <button type="submit" disabled={sending || !input.trim()} className="bg-brand text-white px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-40">→</button>
+              </form>
+              <button onClick={endChat} className="w-full mt-2 text-xs text-gray-400 hover:text-error transition-colors">End conversation</button>
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 px-4 sm:px-8">
+      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-gray-100 px-4 sm:px-8">
         <div className="max-w-6xl mx-auto flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center text-white font-black text-sm">P</div>
             <span className="font-bold text-brand text-lg">PsychometricCoach</span>
           </div>
           <div className="flex items-center gap-3">
+            <Link href="/advertise" className="text-sm font-medium text-gray-500 hover:text-brand px-3 py-2 hidden sm:block">Advertise</Link>
             <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-brand px-3 py-2">Sign In</Link>
             <Link href="/register" className="text-sm font-semibold bg-brand text-white px-4 py-2 rounded-xl hover:bg-brand-dark">Get Started Free</Link>
           </div>
@@ -56,8 +224,6 @@ export default function LandingPage() {
           </div>
           <p className="text-blue-200 text-sm mt-6">No credit card required · Free plan available forever</p>
         </div>
-
-        {/* Stats */}
         <div className="max-w-3xl mx-auto mt-16 grid grid-cols-3 gap-4">
           {[['5,000+', 'Practice Questions'], ['15', 'Test Categories'], ['10K+', 'Active Learners']].map(([n, l]) => (
             <div key={l} className="bg-white/10 rounded-2xl p-5 text-center">
@@ -87,7 +253,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Categories preview */}
+      {/* Categories */}
       <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
@@ -125,6 +291,44 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Contact Section */}
+      <section className="py-20 px-4 bg-white" id="contact">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-black text-gray-900 mb-3">Get in Touch</h2>
+            <p className="text-gray-500">Have a question, feedback or partnership enquiry? We&apos;d love to hear from you.</p>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-6">
+            <div className="bg-surface rounded-2xl p-6 border border-gray-100 text-center">
+              <div className="text-3xl mb-3">📧</div>
+              <h3 className="font-bold text-gray-900 mb-1">Email Support</h3>
+              <p className="text-sm text-gray-500 mb-3">We reply within 24 hours</p>
+              <a href="mailto:support@psycometriccoach.online" className="text-brand font-semibold text-sm hover:underline">support@psycometriccoach.online</a>
+            </div>
+            <div className="bg-surface rounded-2xl p-6 border border-gray-100 text-center">
+              <div className="text-3xl mb-3">💬</div>
+              <h3 className="font-bold text-gray-900 mb-1">Live Chat</h3>
+              <p className="text-sm text-gray-500 mb-3">Chat with us right now</p>
+              <button
+                onClick={() => {
+                  const btn = document.querySelector('[aria-label="Open live chat"]') as HTMLButtonElement;
+                  if (btn) btn.click();
+                }}
+                className="text-brand font-semibold text-sm hover:underline"
+              >
+                Start a conversation →
+              </button>
+            </div>
+            <div className="bg-surface rounded-2xl p-6 border border-gray-100 text-center">
+              <div className="text-3xl mb-3">📱</div>
+              <h3 className="font-bold text-gray-900 mb-1">Download App</h3>
+              <p className="text-sm text-gray-500 mb-3">Get the Android app</p>
+              <a href="/download/" className="text-brand font-semibold text-sm hover:underline">Download APK →</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-20 px-4 bg-brand text-white text-center">
         <div className="max-w-2xl mx-auto">
@@ -138,19 +342,27 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-10 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-brand rounded flex items-center justify-center text-white font-black text-xs">P</div>
-            <span className="text-white font-semibold">PsychometricCoach</span>
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-6 text-sm mb-6">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-brand rounded flex items-center justify-center text-white font-black text-xs">P</div>
+              <span className="text-white font-semibold">PsychometricCoach</span>
+            </div>
+            <div className="flex flex-wrap justify-center gap-6">
+              <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
+              <Link href="/terms" className="hover:text-white">Terms of Service</Link>
+              <a href="#contact" className="hover:text-white">Contact</a>
+              <a href="mailto:support@psycometriccoach.online" className="hover:text-white">support@psycometriccoach.online</a>
+            </div>
           </div>
-          <div className="flex gap-6">
-            <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-white">Terms of Service</Link>
-            <a href="mailto:hello@psychometriccoach.com" className="hover:text-white">Contact</a>
+          <div className="border-t border-gray-800 pt-6 text-center text-xs text-gray-600">
+            © 2026 PsychometricCoach. All rights reserved. · <a href="https://www.psychometriccoach.com" className="hover:text-gray-400">www.psychometriccoach.com</a>
           </div>
-          <p>© 2026 PsychometricCoach. All rights reserved.</p>
         </div>
       </footer>
+
+      {/* Live Chat Widget */}
+      <LiveChat />
     </div>
   );
 }

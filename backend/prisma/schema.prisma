@@ -33,36 +33,43 @@ model User {
 }
 
 model Category {
-  id          String     @id @default(cuid())
-  name        String     @unique
-  slug        String     @unique
-  description String
-  icon        String     @default("📊")
-  color       String     @default("#0A528A")
-  questions   Question[]
+  id             String         @id @default(cuid())
+  name           String         @unique
+  slug           String         @unique
+  description    String
+  icon           String         @default("📊")
+  color          String         @default("#0A528A")
+  assessmentType AssessmentType @default(APTITUDE)
+  examType       ExamType?
+  targetLevels   String[]       @default([]) // e.g. ["secondary","graduate","professional"]
+  targetRoles    String[]       @default([]) // e.g. ["accountant","nurse","engineer"]
+  isFreeTrialOnly Boolean       @default(false)
+  trialDurationMin Int          @default(30)
+  questions      Question[]
 
   @@map("categories")
   @@schema("pc")
 }
 
 model Question {
-  id             String     @id @default(cuid())
+  id             String       @id @default(cuid())
   categoryId     String
   subSkill       String
   text           String
   imageUrl       String?
+  diagramData    Json?        // { type: "pie"|"bar"|"line"|"table"|"passage", data: {...} }
   options        Json
   explanation    String
-  difficulty     Int        @default(3)
-  discrimination Float      @default(1.0)
-  timeLimit      Int        @default(60)
+  difficulty     Int          @default(3)
+  discrimination Float        @default(1.0)
+  timeLimit      Int          @default(60)
   tags           String[]
-  isActive       Boolean    @default(true)
-  flagCount      Int        @default(0)
-  createdAt      DateTime   @default(now())
+  isActive       Boolean      @default(true)
+  flagCount      Int          @default(0)
+  createdAt      DateTime     @default(now())
   attempts       Attempt[]
   bookmarks      Bookmark[]
-  category       Category   @relation(fields: [categoryId], references: [id])
+  category       Category     @relation(fields: [categoryId], references: [id])
 
   @@map("questions")
   @@schema("pc")
@@ -152,8 +159,32 @@ enum UserRole {
 
 enum Plan {
   FREE
+  TRIAL
   PREMIUM
   ENTERPRISE
+
+  @@schema("pc")
+}
+
+enum AssessmentType {
+  APTITUDE          // General psychometric
+  EXAM_PREP         // IELTS / TOEFL / OET etc
+  GRADUATE          // Graduate-level
+  PROFESSIONAL      // Work-experience based
+  TECHNICAL         // Role-specific technical
+  PERSONALITY       // Personality / behavioural
+
+  @@schema("pc")
+}
+
+enum ExamType {
+  IELTS
+  TOEFL
+  OET
+  GRE
+  GMAT
+  SAT
+  USMLE
 
   @@schema("pc")
 }
@@ -164,6 +195,132 @@ enum AttemptMode {
   TIMED
   MOCK
   REVIEW
+
+  @@schema("pc")
+}
+
+// ── Advertising ──────────────────────────────────────────────────────────────
+
+model Advertiser {
+  id           String   @id @default(cuid())
+  companyName  String
+  contactName  String
+  email        String   @unique
+  phone        String?
+  website      String?
+  passwordHash String
+  verified     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  ads          Ad[]
+  payments     AdPayment[]
+
+  @@map("advertisers")
+  @@schema("pc")
+}
+
+model Ad {
+  id           String    @id @default(cuid())
+  advertiserId String
+  title        String
+  headline     String
+  bodyText     String
+  ctaText      String    @default("Learn More")
+  ctaUrl       String
+  imageUrl     String?
+  slot         AdSlot    @default(BANNER)
+  status       AdStatus  @default(PENDING)
+  budget       Float     // ZMW
+  spent        Float     @default(0)
+  impressions  Int       @default(0)
+  clicks       Int       @default(0)
+  startDate    DateTime?
+  endDate      DateTime?
+  targetPages  String[]  @default([])
+  rejectedNote String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  advertiser   Advertiser @relation(fields: [advertiserId], references: [id])
+  payments     AdPayment[]
+  events       AdEvent[]
+
+  @@map("ads")
+  @@schema("pc")
+}
+
+model AdPayment {
+  id           String        @id @default(cuid())
+  advertiserId String
+  adId         String?
+  amount       Float
+  currency     String        @default("USD")
+  method       PaymentMethod @default(BANK_TRANSFER)
+  reference    String?
+  status       PaymentStatus @default(PENDING)
+  notes        String?
+  confirmedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  advertiser   Advertiser    @relation(fields: [advertiserId], references: [id])
+  ad           Ad?           @relation(fields: [adId], references: [id])
+
+  @@map("ad_payments")
+  @@schema("pc")
+}
+
+model AdEvent {
+  id        String     @id @default(cuid())
+  adId      String
+  type      AdEventType
+  page      String?
+  userAgent String?
+  ip        String?
+  createdAt DateTime   @default(now())
+  ad        Ad         @relation(fields: [adId], references: [id])
+
+  @@map("ad_events")
+  @@schema("pc")
+}
+
+enum AdSlot {
+  BANNER        // top of page, full width
+  SIDEBAR       // right sidebar on desktop
+  IN_FEED       // between questions/content
+  FOOTER_BANNER // bottom of page
+
+  @@schema("pc")
+}
+
+enum AdStatus {
+  PENDING   // awaiting admin review
+  APPROVED  // live
+  REJECTED  // declined
+  PAUSED    // paused by advertiser or admin
+  COMPLETED // budget exhausted or end date passed
+  DRAFT     // not yet submitted
+
+  @@schema("pc")
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  MOBILE_MONEY
+  CARD
+
+  @@schema("pc")
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  REFUNDED
+
+  @@schema("pc")
+}
+
+enum AdEventType {
+  IMPRESSION
+  CLICK
 
   @@schema("pc")
 }

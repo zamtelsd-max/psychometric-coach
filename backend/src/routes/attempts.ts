@@ -14,7 +14,7 @@ router.post(
     body('questionId').notEmpty(),
     body('selectedOption').notEmpty(),
     body('timeTaken').isInt({ min: 0 }),
-    body('mode').optional().isIn(['DIAGNOSTIC', 'PRACTICE', 'TIMED', 'MOCK', 'REVIEW']),
+    body('mode').optional().customSanitizer((v: string) => v?.toUpperCase()).isIn(['DIAGNOSTIC', 'PRACTICE', 'TIMED', 'MOCK', 'REVIEW']),
     body('confidence').optional().isInt({ min: 1, max: 5 }),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
@@ -121,7 +121,14 @@ router.get('/stats', authenticate, async (req: AuthRequest, res: Response): Prom
       correct: s.correct,
     }));
 
-    res.json(stats);
+    const totalAttempts = stats.reduce((sum, s) => sum + s.total, 0);
+    const totalCorrect = stats.reduce((sum, s) => sum + s.correct, 0);
+    res.json({
+      byCategory: stats,
+      total: totalAttempts,
+      correct: totalCorrect,
+      accuracy: totalAttempts > 0 ? totalCorrect / totalAttempts : 0,
+    });
   } catch {
     res.status(500).json({ error: 'Failed to fetch stats' });
   }

@@ -8,16 +8,28 @@ const prisma_1 = __importDefault(require("../lib/prisma"));
 const auth_1 = require("../middleware/auth");
 const adaptive_1 = require("../services/adaptive");
 const router = (0, express_1.Router)();
+// In-memory cache for categories (changes rarely — refresh every 5 min)
+let categoriesCache = null;
+const CATEGORIES_TTL = 5 * 60 * 1000; // 5 minutes
 // GET /questions/categories — must be BEFORE /:id
 router.get('/categories', async (_req, res) => {
     try {
+        if (categoriesCache && Date.now() - categoriesCache.at < CATEGORIES_TTL) {
+            res.set('X-Cache', 'HIT');
+            res.json(categoriesCache.data);
+            return;
+        }
         const categories = await prisma_1.default.category.findMany({
             include: {
                 _count: { select: { questions: { where: { isActive: true } } } },
             },
             orderBy: { name: 'asc' },
         });
-        res.json(categories.map((c) => ({ ...c, questionCount: c._count.questions })));
+        const mapped = categories.map((c) => ({ ...c, questionCount: c._count.questions }));
+        categoriesCache = { data: mapped, at: Date.now() };
+        res.set('Cache-Control', 'public, max-age=300'); // 5 min browser cache
+        res.set('X-Cache', 'MISS');
+        res.json(mapped);
     }
     catch {
         res.status(500).json({ error: 'Failed to fetch categories' });
@@ -39,7 +51,7 @@ router.get('/diagnostic', auth_1.authenticate, async (req, res) => {
         }
         const questions = await prisma_1.default.question.findMany({
             where: { id: { in: questionIds } },
-            include: { category: { select: { name: true, slug: true, icon: true } } },
+            include: { category: { select: { name: true, slug: true, icon: true, assessmentType: true, isFreeTrialOnly: true, trialDurationMin: true, color: true } } },
         });
         // Shuffle
         const shuffled = questions.sort(() => Math.random() - 0.5);
@@ -71,7 +83,7 @@ router.get('/', auth_1.authenticate, async (req, res) => {
                 id: { in: ids },
                 ...(difficulty ? { difficulty } : {}),
             },
-            include: { category: { select: { name: true, slug: true, icon: true } } },
+            include: { category: { select: { name: true, slug: true, icon: true, assessmentType: true, isFreeTrialOnly: true, trialDurationMin: true, color: true } } },
         });
         // Maintain adaptive order
         const ordered = ids

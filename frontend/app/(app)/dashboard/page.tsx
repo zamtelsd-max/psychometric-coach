@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '../../../store/authStore';
 import { profileApi, attemptsApi } from '../../../lib/api';
+import AdBanner from '../../../components/AdBanner';
 
 interface ProfileData {
   user: { name: string; readinessScore: number; streakDays: number; plan: string };
@@ -155,10 +156,20 @@ export default function DashboardPage() {
 
       {/* Quick actions */}
       <div className="grid grid-cols-2 gap-3">
+        <Link href="/assessments" className="bg-gradient-to-br from-[#0A528A] to-blue-700 text-white rounded-2xl p-4 hover:shadow-lg transition-all col-span-2">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">🎯</span>
+            <div>
+              <p className="font-black text-sm">Find Your Assessment</p>
+              <p className="text-xs text-blue-200 mt-0.5">By exam, education level or profession · 29 assessments</p>
+            </div>
+            <span className="ml-auto text-xl opacity-70">→</span>
+          </div>
+        </Link>
         <Link href="/library" className="bg-white border border-gray-100 rounded-2xl p-4 hover:border-brand/20 hover:shadow-sm transition-all">
           <div className="text-2xl mb-2">📚</div>
           <p className="font-semibold text-gray-900 text-sm">Browse Library</p>
-          <p className="text-xs text-gray-400 mt-0.5">All 15 categories</p>
+          <p className="text-xs text-gray-400 mt-0.5">All categories</p>
         </Link>
         <Link href="/bookmarks" className="bg-white border border-gray-100 rounded-2xl p-4 hover:border-brand/20 hover:shadow-sm transition-all">
           <div className="text-2xl mb-2">🔖</div>
@@ -166,6 +177,9 @@ export default function DashboardPage() {
           <p className="text-xs text-gray-400 mt-0.5">Saved questions</p>
         </Link>
       </div>
+
+      {/* Ad slot — shown to free users */}
+      <AdBanner slot="BANNER" className="mt-2" />
     </div>
   );
 }

@@ -81,7 +81,14 @@ router.get('/:id', auth_1.authenticate, async (req, res) => {
             res.status(404).json({ error: 'Exam not found' });
             return;
         }
-        res.json(exam);
+        // Fetch questions for this exam based on categoryIds
+        const questions = await prisma_1.default.question.findMany({
+            where: { categoryId: { in: exam.categoryIds }, isActive: true },
+            take: exam.totalQ,
+            include: { category: { select: { name: true, slug: true, icon: true } } },
+            orderBy: { difficulty: 'asc' },
+        });
+        res.json({ ...exam, questions });
     }
     catch {
         res.status(500).json({ error: 'Failed to fetch exam' });

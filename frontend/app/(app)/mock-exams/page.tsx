@@ -28,7 +28,7 @@ export default function MockExamsPage() {
     setStarting(true);
     try {
       const res = await mockExamsApi.start({ categoryIds: selected, questionCount });
-      sessionStorage.setItem('psy_exam_id', res.data.examId); router.push('/mock-exams/session');
+      sessionStorage.setItem('psy_exam_id', res.data.exam?.id || res.data.examId); sessionStorage.setItem('psy_exam_questions', JSON.stringify(res.data.questions || [])); router.push('/mock-exams/session');
     } catch { setStarting(false); }
   };
 

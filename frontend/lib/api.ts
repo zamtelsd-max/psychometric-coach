@@ -42,7 +42,7 @@ export const questionsApi = {
 };
 
 export const attemptsApi = {
-  submit: (data: { questionId: string; selectedOption: string; timeTaken: number; confidence?: number; mode: string; sessionId?: string }) =>
+  submit: (data: { questionId: string; selectedOption: string; timeTaken: number; confidence?: number; mode: 'DIAGNOSTIC' | 'PRACTICE' | 'TIMED' | 'MOCK' | 'REVIEW'; sessionId?: string }) =>
     api.post('/attempts', data),
   stats: () => api.get('/attempts/stats'),
   heatmap: () => api.get('/attempts/heatmap'),

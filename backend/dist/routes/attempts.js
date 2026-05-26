@@ -14,7 +14,7 @@ router.post('/', auth_1.authenticate, [
     (0, express_validator_1.body)('questionId').notEmpty(),
     (0, express_validator_1.body)('selectedOption').notEmpty(),
     (0, express_validator_1.body)('timeTaken').isInt({ min: 0 }),
-    (0, express_validator_1.body)('mode').optional().isIn(['DIAGNOSTIC', 'PRACTICE', 'TIMED', 'MOCK', 'REVIEW']),
+    (0, express_validator_1.body)('mode').optional().customSanitizer((v) => v?.toUpperCase()).isIn(['DIAGNOSTIC', 'PRACTICE', 'TIMED', 'MOCK', 'REVIEW']),
     (0, express_validator_1.body)('confidence').optional().isInt({ min: 1, max: 5 }),
 ], async (req, res) => {
     const errors = (0, express_validator_1.validationResult)(req);
@@ -99,7 +99,14 @@ router.get('/stats', auth_1.authenticate, async (req, res) => {
             total: s.total,
             correct: s.correct,
         }));
-        res.json(stats);
+        const totalAttempts = stats.reduce((sum, s) => sum + s.total, 0);
+        const totalCorrect = stats.reduce((sum, s) => sum + s.correct, 0);
+        res.json({
+            byCategory: stats,
+            total: totalAttempts,
+            correct: totalCorrect,
+            accuracy: totalAttempts > 0 ? totalCorrect / totalAttempts : 0,
+        });
     }
     catch {
         res.status(500).json({ error: 'Failed to fetch stats' });

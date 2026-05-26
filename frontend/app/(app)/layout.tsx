@@ -6,6 +6,7 @@ import { useAuthStore } from '../../store/authStore';
 
 const navItems = [
   { href: '/dashboard', icon: '🏠', label: 'Home' },
+  { href: '/assessments', icon: '🎯', label: 'Assessments' },
   { href: '/library', icon: '📚', label: 'Library' },
   { href: '/practice', icon: '✏️', label: 'Practice' },
   { href: '/mock-exams', icon: '📋', label: 'Mock Exams' },

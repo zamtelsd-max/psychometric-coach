@@ -170,6 +170,89 @@ router.get('/users', ...adminOnly, async (req: AuthRequest, res: Response): Prom
   }
 });
 
+// GET /admin/activity — recent attempts, active users, mock exams
+router.get('/activity', ...adminOnly, async (_req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const [recentAttempts, recentExams, activeToday, activeLast7d, topCategories] = await Promise.all([
+      // Last 50 question attempts
+      prisma.attempt.findMany({
+        take: 50,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          isCorrect: true,
+          mode: true,
+          timeTaken: true,
+          createdAt: true,
+          user: { select: { id: true, name: true, email: true } },
+          question: { select: { text: true, category: { select: { name: true, icon: true } } } },
+        },
+      }),
+      // Last 20 mock exams — fetch exams then join user names manually
+      prisma.mockExam.findMany({
+        take: 20,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          score: true,
+          totalQ: true,
+          userId: true,
+          completedAt: true,
+          createdAt: true,
+        },
+      }).then(async (exams) => {
+        const userIds = [...new Set(exams.map((e) => e.userId))];
+        const users = await prisma.user.findMany({
+          where: { id: { in: userIds } },
+          select: { id: true, name: true, email: true },
+        });
+        const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
+        return exams.map((e) => ({ ...e, user: userMap[e.userId] ?? null }));
+      }),
+      // Users active today
+      prisma.user.count({
+        where: {
+          lastActiveAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+        },
+      }),
+      // Users active last 7 days
+      prisma.user.count({
+        where: {
+          lastActiveAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+        },
+      }),
+      // Top categories by attempt count
+      prisma.attempt.groupBy({
+        by: ['questionId'],
+        _count: { questionId: true },
+        orderBy: { _count: { questionId: 'desc' } },
+        take: 100,
+      }).then(async (grouped) => {
+        const qIds = grouped.map((g: { questionId: string }) => g.questionId);
+        const questions = await prisma.question.findMany({
+          where: { id: { in: qIds } },
+          select: { categoryId: true, category: { select: { name: true, icon: true } } },
+        });
+        const catCounts: Record<string, { name: string; icon: string; count: number }> = {};
+        for (const q of questions) {
+          const key = q.categoryId;
+          if (!catCounts[key]) catCounts[key] = { name: q.category.name, icon: q.category.icon || '', count: 0 };
+          catCounts[key].count++;
+        }
+        return Object.values(catCounts)
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 8);
+      }),
+    ]);
+
+    res.json({ recentAttempts, recentExams, activeToday, activeLast7d, topCategories });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Failed to fetch activity' });
+  }
+});
+
 // GET /admin/flags
 router.get('/flags', ...adminOnly, async (_req: AuthRequest, res: Response): Promise<void> => {
   try {

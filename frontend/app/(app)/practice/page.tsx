@@ -1,16 +1,31 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { questionsApi, attemptsApi, bookmarksApi } from '../../../lib/api';
+import DiagramRenderer from '../../../components/DiagramRenderer';
 
 interface Option { id: string; text: string; isCorrect: boolean; }
 interface Question {
   id: string; text: string; options: Option[];
   explanation: string; difficulty: number; timeLimit: number;
-  category?: { name: string; icon: string };
+  imageUrl?: string;
+  diagramData?: {
+    type: 'pie'|'bar'|'line'|'table'|'passage'|'chart_bar';
+    title?: string;
+    labels?: string[];
+    datasets?: {label:string;data:number[];color:string}[];
+    values?: number[];
+    colors?: string[];
+    headers?: string[];
+    rows?: string[][];
+    highlightCol?: number;
+    highlightRow?: number;
+    text?: string;
+  } | null;
+  category?: { name: string; icon: string; assessmentType?: string; isFreeTrialOnly?: boolean; trialDurationMin?: number };
 }
 
-type Mode = 'PRACTICE' | 'TIMED' | 'GUIDED';
+type Mode = 'PRACTICE' | 'TIMED' | 'DIAGNOSTIC';
 
 export default function PracticePage() {
   const params = useSearchParams();
@@ -28,13 +43,37 @@ export default function PracticePage() {
   const [startTime, setStartTime] = useState(Date.now());
   const [bookmarked, setBookmarked] = useState(false);
   const [done, setDone] = useState(false);
+  // Trial timer for exam prep categories
+  const [trialExpired, setTrialExpired] = useState(false);
+  const [trialSecondsLeft, setTrialSecondsLeft] = useState<number | null>(null);
+  const trialRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadQuestions = useCallback(() => {
     setLoading(true);
     questionsApi.practice({ category, limit: 20, mode }).then(r => {
       setQuestions(r.data);
       setIdx(0); setSelected(null); setSubmitted(false); setStartTime(Date.now());
+      // Set up trial timer if exam prep category
+      const firstQ = r.data[0];
+      const cat = firstQ?.category;
+      if (cat?.isFreeTrialOnly) {
+        const mins = cat.trialDurationMin ?? 30;
+        const secs = mins * 60;
+        setTrialSecondsLeft(secs);
+        if (trialRef.current) clearInterval(trialRef.current);
+        trialRef.current = setInterval(() => {
+          setTrialSecondsLeft(prev => {
+            if (prev === null || prev <= 1) {
+              if (trialRef.current) clearInterval(trialRef.current!);
+              setTrialExpired(true);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
     }).catch(()=>{}).finally(()=>setLoading(false));
+    return () => { if (trialRef.current) clearInterval(trialRef.current); };
   }, [category, mode]);
 
   useEffect(() => { loadQuestions(); }, [loadQuestions]);
@@ -88,6 +127,36 @@ export default function PracticePage() {
     } catch {}
   };
 
+  // Trial expired paywall
+  if (trialExpired) return (
+    <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="bg-white rounded-3xl shadow-xl p-8 max-w-sm w-full text-center border-2 border-amber-300">
+        <div className="text-5xl mb-4">⏰</div>
+        <h2 className="text-2xl font-black text-slate-900 mb-2">Free Trial Complete</h2>
+        <p className="text-slate-500 text-sm mb-4">
+          Your 30-minute free trial for this exam prep module has ended.<br/>
+          Upgrade to <span className="font-bold text-amber-600">Premium</span> for unlimited access to IELTS, TOEFL, OET mock exams and practice.
+        </p>
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5 text-left">
+          <p className="text-xs font-bold text-amber-700 mb-2">Premium includes:</p>
+          <ul className="text-xs text-slate-600 space-y-1">
+            <li>✅ Unlimited IELTS, TOEFL & OET practice</li>
+            <li>✅ Full-length mock exams with scoring</li>
+            <li>✅ Detailed performance analytics</li>
+            <li>✅ Answer explanations & study plans</li>
+            <li>✅ All 29 assessment categories</li>
+          </ul>
+        </div>
+        <a href="/profile" className="block w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3.5 rounded-2xl transition-all mb-3">
+          🔓 Upgrade to Premium
+        </a>
+        <a href="/library" className="block text-sm text-slate-400 hover:text-slate-600">
+          ← Back to Library
+        </a>
+      </div>
+    </div>
+  );
+
   if (loading) return (
     <div className="flex items-center justify-center h-64">
       <div className="text-center"><div className="text-4xl mb-3 animate-spin">⏳</div><p className="text-gray-500">Loading questions…</p></div>
@@ -118,10 +187,10 @@ export default function PracticePage() {
       {/* Mode selector */}
       {idx === 0 && !submitted && (
         <div className="flex gap-2 mb-5 bg-white border border-gray-100 rounded-2xl p-1.5">
-          {(['PRACTICE','TIMED','GUIDED'] as Mode[]).map(m => (
+          {((['PRACTICE','TIMED','DIAGNOSTIC'] as Mode[])).map(m => (
             <button key={m} onClick={() => setMode(m)}
               className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${mode === m ? 'bg-brand text-white' : 'text-gray-500 hover:text-gray-900'}`}>
-              {m === 'PRACTICE' ? '📝 Practice' : m === 'TIMED' ? '⏱️ Timed' : '💡 Guided'}
+              {m === 'PRACTICE' ? '📝 Practice' : m === 'TIMED' ? '⏱️ Timed' : '🔍 Diagnostic'}
             </button>
           ))}
         </div>
@@ -149,9 +218,28 @@ export default function PracticePage() {
         </div>
       )}
 
-      {/* Question */}
+      {/* Trial timer banner */}
+      {trialSecondsLeft !== null && !trialExpired && (
+        <div className={`flex items-center justify-between rounded-xl px-4 py-2 mb-3 text-xs font-semibold ${trialSecondsLeft < 300 ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+          <span>⏱ Free Trial</span>
+          <span>{Math.floor(trialSecondsLeft/60)}:{String(trialSecondsLeft%60).padStart(2,'0')} remaining</span>
+          <a href="/profile" className="underline">Upgrade</a>
+        </div>
+      )}
+
+      {/* Diagram / Chart / Passage */}
+      {q.diagramData && <DiagramRenderer data={q.diagramData} />}
+
+      {/* Image (legacy) */}
+      {q.imageUrl && !q.diagramData && (
+        <div className="mb-4">
+          <img src={q.imageUrl} alt="Question diagram" className="rounded-xl w-full object-contain max-h-64 border border-gray-100" />
+        </div>
+      )}
+
+      {/* Question text */}
       <div className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100 mb-4">
-        <p className="text-gray-900 font-medium leading-relaxed text-base">{q.text}</p>
+        <p className="text-gray-900 font-medium leading-relaxed text-base whitespace-pre-line">{q.text}</p>
       </div>
 
       {/* Options */}

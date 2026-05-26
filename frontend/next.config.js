@@ -3,6 +3,6 @@ const nextConfig = {
   output: 'export',
   trailingSlash: true,
   images: { unoptimized: true },
-  basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
+  // No basePath needed — serving from root of psychometriccoach.com
 };
 module.exports = nextConfig;

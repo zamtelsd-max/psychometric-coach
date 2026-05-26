@@ -5,16 +5,29 @@ import { getAdaptiveQuestions } from '../services/adaptive';
 
 const router = Router();
 
+// In-memory cache for categories (changes rarely — refresh every 5 min)
+let categoriesCache: { data: unknown; at: number } | null = null;
+const CATEGORIES_TTL = 5 * 60 * 1000; // 5 minutes
+
 // GET /questions/categories — must be BEFORE /:id
 router.get('/categories', async (_req, res: Response): Promise<void> => {
   try {
+    if (categoriesCache && Date.now() - categoriesCache.at < CATEGORIES_TTL) {
+      res.set('X-Cache', 'HIT');
+      res.json(categoriesCache.data);
+      return;
+    }
     const categories = await prisma.category.findMany({
       include: {
         _count: { select: { questions: { where: { isActive: true } } } },
       },
       orderBy: { name: 'asc' },
     });
-    res.json(categories.map((c) => ({ ...c, questionCount: c._count.questions })));
+    const mapped = categories.map((c) => ({ ...c, questionCount: c._count.questions }));
+    categoriesCache = { data: mapped, at: Date.now() };
+    res.set('Cache-Control', 'public, max-age=300'); // 5 min browser cache
+    res.set('X-Cache', 'MISS');
+    res.json(mapped);
   } catch {
     res.status(500).json({ error: 'Failed to fetch categories' });
   }
@@ -38,7 +51,7 @@ router.get('/diagnostic', authenticate, async (req: AuthRequest, res: Response):
 
     const questions = await prisma.question.findMany({
       where: { id: { in: questionIds } },
-      include: { category: { select: { name: true, slug: true, icon: true } } },
+      include: { category: { select: { name: true, slug: true, icon: true, assessmentType: true, isFreeTrialOnly: true, trialDurationMin: true, color: true } } },
     });
 
     // Shuffle
@@ -74,7 +87,7 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response): Promise<v
         id: { in: ids },
         ...(difficulty ? { difficulty } : {}),
       },
-      include: { category: { select: { name: true, slug: true, icon: true } } },
+      include: { category: { select: { name: true, slug: true, icon: true, assessmentType: true, isFreeTrialOnly: true, trialDurationMin: true, color: true } } },
     });
 
     // Maintain adaptive order

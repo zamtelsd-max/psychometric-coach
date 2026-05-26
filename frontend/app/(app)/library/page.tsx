@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { questionsApi } from '../../../lib/api';
+import AdBanner from '../../../components/AdBanner';
 
 interface Category {
   id: string; name: string; slug: string; icon: string; color: string;
@@ -37,7 +38,9 @@ export default function LibraryPage() {
           {Array.from({length:6}).map((_,i) => <div key={i} className="h-36 bg-gray-100 rounded-2xl animate-pulse"/>)}
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div>
+          <AdBanner slot="IN_FEED" className="mb-4" />
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(cat => (
             <Link key={cat.id} href={`/practice?category=${cat.slug}`}
               className="bg-white rounded-2xl p-5 border border-gray-100 hover:border-brand/30 hover:shadow-md transition-all group">
@@ -54,6 +57,7 @@ export default function LibraryPage() {
               </div>
             </Link>
           ))}
+          </div>
         </div>
       )}
 

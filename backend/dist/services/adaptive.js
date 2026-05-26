@@ -34,21 +34,22 @@ function estimateAbility(recentAttempts) {
 async function getAdaptiveQuestions(userId, categoryId, count, mode = 'PRACTICE') {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - AVOID_RECENT_DAYS);
-    // Get recently attempted question IDs
-    const recentAttempts = await prisma_1.default.attempt.findMany({
-        where: { userId, createdAt: { gte: cutoffDate } },
-        select: { questionId: true },
-    });
+    // Run both attempt queries in parallel to halve latency
+    const [recentAttempts, abilityAttempts] = await Promise.all([
+        prisma_1.default.attempt.findMany({
+            where: { userId, createdAt: { gte: cutoffDate } },
+            select: { questionId: true },
+        }),
+        prisma_1.default.attempt.findMany({
+            where: { userId, ...(categoryId ? { question: { categoryId } } : {}) },
+            take: 20,
+            orderBy: { createdAt: 'desc' },
+            select: { isCorrect: true, question: { select: { difficulty: true } } },
+        }),
+    ]);
     const recentIds = recentAttempts.map((a) => a.questionId);
-    // Get recent attempts with question difficulty for ability estimation
-    const abilityAttempts = await prisma_1.default.attempt.findMany({
-        where: { userId, ...(categoryId ? { question: { categoryId } } : {}) },
-        take: 20,
-        orderBy: { createdAt: 'desc' },
-        select: { isCorrect: true, question: { select: { difficulty: true } } },
-    });
     const ability = estimateAbility(abilityAttempts);
-    const targetDifficulty = Math.round(((ability + 3) / 6) * 9 + 1); // Map back to 1-10
+    const targetDifficulty = Math.round(((ability + 3) / 6) * 9 + 1);
     const diffLow = Math.max(1, targetDifficulty - 2);
     const diffHigh = Math.min(10, targetDifficulty + 2);
     // Fetch questions at target difficulty, not recently seen
@@ -56,26 +57,26 @@ async function getAdaptiveQuestions(userId, categoryId, count, mode = 'PRACTICE'
         where: {
             isActive: true,
             ...(categoryId ? { categoryId } : {}),
-            id: { notIn: recentIds },
+            ...(recentIds.length > 0 ? { id: { notIn: recentIds } } : {}),
             difficulty: { gte: diffLow, lte: diffHigh },
         },
-        take: count * 3, // fetch extra to randomize
+        take: count * 3,
         select: { id: true },
     });
-    // If not enough, fill with questions outside the difficulty range
+    // If not enough, fill with any remaining questions from this category
     if (questions.length < count) {
+        const seenIds = [...recentIds, ...questions.map((q) => q.id)];
         const fallback = await prisma_1.default.question.findMany({
             where: {
                 isActive: true,
                 ...(categoryId ? { categoryId } : {}),
-                id: { notIn: [...recentIds, ...questions.map((q) => q.id)] },
+                ...(seenIds.length > 0 ? { id: { notIn: seenIds } } : {}),
             },
             take: count - questions.length,
             select: { id: true },
         });
         questions.push(...fallback);
     }
-    // Shuffle and return count
     const shuffled = questions.sort(() => Math.random() - 0.5);
     return shuffled.slice(0, count).map((q) => q.id);
 }

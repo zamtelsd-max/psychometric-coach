@@ -78,17 +78,33 @@ router.get('/', auth_1.authenticate, async (req, res) => {
         }
         // Get adaptive question IDs
         const ids = await (0, adaptive_1.getAdaptiveQuestions)(req.user.id, categoryId, limit, mode);
-        const questions = await prisma_1.default.question.findMany({
-            where: {
-                id: { in: ids },
-                ...(difficulty ? { difficulty } : {}),
-            },
-            include: { category: { select: { name: true, slug: true, icon: true, assessmentType: true, isFreeTrialOnly: true, trialDurationMin: true, color: true } } },
-        });
-        // Maintain adaptive order
-        const ordered = ids
-            .map((id) => questions.find((q) => q.id === id))
-            .filter(Boolean);
+        let questions;
+        if (ids.length > 0) {
+            questions = await prisma_1.default.question.findMany({
+                where: {
+                    id: { in: ids },
+                    ...(difficulty ? { difficulty } : {}),
+                },
+                include: { category: { select: { name: true, slug: true, icon: true, assessmentType: true, isFreeTrialOnly: true, trialDurationMin: true, color: true } } },
+            });
+        }
+        else {
+            // Fallback: return random active questions from this category (avoids blank page)
+            questions = await prisma_1.default.question.findMany({
+                where: {
+                    ...(categoryId ? { categoryId } : {}),
+                    isActive: true,
+                    ...(difficulty ? { difficulty } : {}),
+                },
+                include: { category: { select: { name: true, slug: true, icon: true, assessmentType: true, isFreeTrialOnly: true, trialDurationMin: true, color: true } } },
+                take: limit,
+                orderBy: { createdAt: 'desc' },
+            });
+        }
+        // Maintain adaptive order if we have IDs, otherwise use as-is
+        const ordered = ids.length > 0
+            ? ids.map((id) => questions.find((q) => q.id === id)).filter(Boolean)
+            : questions.sort(() => Math.random() - 0.5);
         res.json(ordered);
     }
     catch {

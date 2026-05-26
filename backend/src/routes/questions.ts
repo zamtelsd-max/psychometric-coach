@@ -82,18 +82,33 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response): Promise<v
     // Get adaptive question IDs
     const ids = await getAdaptiveQuestions(req.user!.id, categoryId, limit, mode);
 
-    const questions = await prisma.question.findMany({
-      where: {
-        id: { in: ids },
-        ...(difficulty ? { difficulty } : {}),
-      },
-      include: { category: { select: { name: true, slug: true, icon: true, assessmentType: true, isFreeTrialOnly: true, trialDurationMin: true, color: true } } },
-    });
+    let questions;
+    if (ids.length > 0) {
+      questions = await prisma.question.findMany({
+        where: {
+          id: { in: ids },
+          ...(difficulty ? { difficulty } : {}),
+        },
+        include: { category: { select: { name: true, slug: true, icon: true, assessmentType: true, isFreeTrialOnly: true, trialDurationMin: true, color: true } } },
+      });
+    } else {
+      // Fallback: return random active questions from this category (avoids blank page)
+      questions = await prisma.question.findMany({
+        where: {
+          ...(categoryId ? { categoryId } : {}),
+          isActive: true,
+          ...(difficulty ? { difficulty } : {}),
+        },
+        include: { category: { select: { name: true, slug: true, icon: true, assessmentType: true, isFreeTrialOnly: true, trialDurationMin: true, color: true } } },
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      });
+    }
 
-    // Maintain adaptive order
-    const ordered = ids
-      .map((id) => questions.find((q) => q.id === id))
-      .filter(Boolean);
+    // Maintain adaptive order if we have IDs, otherwise use as-is
+    const ordered = ids.length > 0
+      ? ids.map((id) => questions.find((q) => q.id === id)).filter(Boolean)
+      : questions.sort(() => Math.random() - 0.5);
 
     res.json(ordered);
   } catch {

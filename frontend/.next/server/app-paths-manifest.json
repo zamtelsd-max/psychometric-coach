@@ -11,13 +11,13 @@
   "/privacy/page": "app/privacy/page.js",
   "/terms/page": "app/terms/page.js",
   "/(app)/admin/page": "app/(app)/admin/page.js",
-  "/(app)/bookmarks/page": "app/(app)/bookmarks/page.js",
   "/(app)/assessments/page": "app/(app)/assessments/page.js",
+  "/(app)/bookmarks/page": "app/(app)/bookmarks/page.js",
   "/(app)/dashboard/page": "app/(app)/dashboard/page.js",
   "/(app)/diagnostic/page": "app/(app)/diagnostic/page.js",
   "/(app)/library/page": "app/(app)/library/page.js",
   "/(app)/mock-exams/page": "app/(app)/mock-exams/page.js",
   "/(app)/mock-exams/session/page": "app/(app)/mock-exams/session/page.js",
-  "/(app)/practice/page": "app/(app)/practice/page.js",
-  "/(app)/profile/page": "app/(app)/profile/page.js"
+  "/(app)/profile/page": "app/(app)/profile/page.js",
+  "/(app)/practice/page": "app/(app)/practice/page.js"
 }

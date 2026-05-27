@@ -21,63 +21,69 @@ const AD_VIDEOS = [
 ];
 
 function VideoShowcase() {
+  // Only re-render for active index changes — everything else via DOM refs
   const [active, setActive] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const [fading, setFading] = useState(false);
-  const [paused, setPaused] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const progressRef = useRef<number>(0);
-  const rafRef = useRef<number>(0);
-  const startRef = useRef<number>(0);
-  const DURATION = 32000; // ms per video
+  const [showPlay, setShowPlay] = useState(false);
 
+  const videoRef    = useRef<HTMLVideoElement>(null);
+  const barRef      = useRef<HTMLDivElement>(null);      // main progress bar fill
+  const thumbBarRef = useRef<HTMLDivElement>(null);      // thumbnail progress fill
+  const rafRef      = useRef<number>(0);
+  const startRef    = useRef<number>(0);
+  const activeRef   = useRef(0);                         // shadow of active for rAF closure
+  const DURATION    = 32000;
+
+  // Switch to a video — never called inside rAF
   const goTo = useCallback((idx: number) => {
-    setFading(true);
-    setTimeout(() => {
-      setActive(idx);
-      setProgress(0);
-      progressRef.current = 0;
-      startRef.current = 0;
-      setFading(false);
-    }, 600);
+    cancelAnimationFrame(rafRef.current);
+    const next = (idx + AD_VIDEOS.length) % AD_VIDEOS.length;
+    activeRef.current = next;
+    setActive(next);
+    // reset bars immediately via DOM
+    if (barRef.current)      barRef.current.style.width = '0%';
+    if (thumbBarRef.current) thumbBarRef.current.style.width = '0%';
+    startRef.current = 0;
   }, []);
 
-  // Progress ticker
-  useEffect(() => {
+  // rAF progress ticker — zero React state updates
+  const startTicker = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
     startRef.current = 0;
-
     const tick = (ts: number) => {
       if (!startRef.current) startRef.current = ts;
-      const elapsed = ts - startRef.current;
-      const pct = Math.min(elapsed / DURATION, 1);
-      setProgress(pct);
-      progressRef.current = pct;
-      if (pct < 1) {
+      const pct = Math.min((ts - startRef.current) / DURATION, 1) * 100;
+      if (barRef.current)      barRef.current.style.width = pct + '%';
+      if (thumbBarRef.current) thumbBarRef.current.style.width = pct + '%';
+      if (pct < 100) {
         rafRef.current = requestAnimationFrame(tick);
       } else {
-        goTo((active + 1) % AD_VIDEOS.length);
+        goTo(activeRef.current + 1);
       }
     };
     rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [active, goTo]);
+  }, [goTo]);
 
-  // Sync video element — key forces remount, but also try play on mount
+  // Load + play whenever active changes
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    setPaused(false);
+    setShowPlay(false);
+    v.src = AD_VIDEOS[active].src;
+    v.load();
     const tryPlay = () => {
-      const p = v.play();
-      if (p) p.catch(() => setPaused(true));
+      v.play()
+        .then(() => { setShowPlay(false); startTicker(); })
+        .catch(() => setShowPlay(true));
     };
-    if (v.readyState >= 2) { tryPlay(); }
-    else { v.addEventListener('canplay', tryPlay, { once: true }); }
-  }, [active]);
+    v.addEventListener('canplay', tryPlay, { once: true });
+    return () => { v.removeEventListener('canplay', tryPlay); };
+  }, [active, startTicker]);
+
+  // Cleanup on unmount
+  useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
 
   const video = AD_VIDEOS[active];
-  const next = AD_VIDEOS[(active + 1) % AD_VIDEOS.length];
+  const next  = AD_VIDEOS[(active + 1) % AD_VIDEOS.length];
 
   return (
     <section className="py-20 px-4 bg-[#05111F] overflow-hidden">
@@ -92,36 +98,38 @@ function VideoShowcase() {
         <div className="flex flex-col lg:flex-row gap-8 items-center justify-center">
 
           {/* ── Main video player ── */}
-          <div className={`relative transition-all duration-600 ${fading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
-            style={{ transition: 'opacity 0.6s ease, transform 0.6s ease' }}>
+          <div className="relative">
             {/* Glow */}
             <div className="absolute -inset-4 bg-brand/20 rounded-3xl blur-2xl pointer-events-none" />
-            <div className="relative w-[260px] sm:w-[300px] rounded-3xl overflow-hidden shadow-2xl border border-white/10"
-              onClick={() => { const v = videoRef.current; if (v) { v.muted = true; v.play().catch(() => {}); setPaused(false); } }}>
+            <div className="relative w-[260px] sm:w-[300px] rounded-3xl overflow-hidden shadow-2xl border border-white/10 cursor-pointer"
+              onClick={() => {
+                const v = videoRef.current;
+                if (!v) return;
+                v.muted = true;
+                v.play().then(() => { setShowPlay(false); startTicker(); }).catch(() => {});
+              }}>
+              {/* Single stable <video> — src set via DOM ref, never remounted */}
               <video
-                key={active}
                 ref={videoRef}
-                className="w-full h-full object-cover"
-                autoPlay muted playsInline
-                src={video.src}
+                className="w-full h-full object-cover block"
+                muted playsInline
                 style={{ aspectRatio: '9/16' }}
               />
-              {/* Click-to-play overlay (shown when autoplay blocked) */}
-              {paused && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer">
+              {/* Click-to-play overlay */}
+              {showPlay && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                   <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center text-3xl shadow-xl">▶</div>
                 </div>
               )}
-              {/* Overlay label */}
+              {/* Tag label */}
               <div className="absolute top-4 left-0 right-0 flex justify-center pointer-events-none">
                 <span className={`${video.tagColor} text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg`}>
                   {video.tag}
                 </span>
               </div>
-              {/* Progress bar */}
+              {/* Progress bar — updated via DOM ref, no re-render */}
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10">
-                <div className="h-full bg-brand transition-none rounded-full"
-                  style={{ width: `${progress * 100}%` }} />
+                <div ref={barRef} className="h-full bg-brand rounded-full" style={{ width: '0%' }} />
               </div>
             </div>
           </div>
@@ -129,7 +137,7 @@ function VideoShowcase() {
           {/* ── Right panel ── */}
           <div className="flex flex-col gap-5 max-w-sm w-full">
             {/* Current info */}
-            <div className={`transition-all duration-500 ${fading ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}>
+            <div>
               <p className="text-slate-400 text-sm uppercase tracking-widest font-bold mb-2">Now playing</p>
               <h3 className="text-2xl font-black text-white mb-1">{video.title}</h3>
               <p className="text-slate-300 text-sm">{video.subtitle}</p>
@@ -147,7 +155,7 @@ function VideoShowcase() {
                   </div>
                   {i === active && (
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/10">
-                      <div className="h-full bg-brand" style={{ width: `${progress * 100}%`, transition: 'width 0.1s linear' }} />
+                      <div ref={thumbBarRef} className="h-full bg-brand" style={{ width: '0%' }} />
                     </div>
                   )}
                 </button>

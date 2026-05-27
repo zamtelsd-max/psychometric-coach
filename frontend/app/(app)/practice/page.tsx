@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { questionsApi, attemptsApi, bookmarksApi } from '../../../lib/api';
+import { questionsApi, attemptsApi, bookmarksApi, profileApi } from '../../../lib/api';
 import DiagramRenderer from '../../../components/DiagramRenderer';
 
 // ── Audio Player for Listening questions ───────────────────────────────────
@@ -115,6 +115,14 @@ export default function PracticePage() {
   const [startTime, setStartTime] = useState(Date.now());
   const [bookmarked, setBookmarked] = useState(false);
   const [done, setDone] = useState(false);
+  // Admin bypass — admins see everything, no trial limits
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    profileApi.get().then(r => {
+      if (r.data?.role === 'ADMIN') setIsAdmin(true);
+    }).catch(() => {});
+  }, []);
+
   // Trial timer for exam prep categories
   const [trialExpired, setTrialExpired] = useState(false);
   const [trialSecondsLeft, setTrialSecondsLeft] = useState<number | null>(null);
@@ -128,7 +136,7 @@ export default function PracticePage() {
       // Set up trial timer if exam prep category
       const firstQ = r.data[0];
       const cat = firstQ?.category;
-      if (cat?.isFreeTrialOnly) {
+      if (cat?.isFreeTrialOnly && !isAdmin) {
         const mins = cat.trialDurationMin ?? 30;
         const secs = mins * 60;
         setTrialSecondsLeft(secs);
@@ -199,8 +207,8 @@ export default function PracticePage() {
     } catch {}
   };
 
-  // Trial expired paywall
-  if (trialExpired) return (
+  // Trial expired paywall — skip entirely for admin
+  if (trialExpired && !isAdmin) return (
     <div className="min-h-screen flex items-center justify-center p-6">
       <div className="bg-white rounded-3xl shadow-xl p-8 max-w-sm w-full text-center border-2 border-amber-300">
         <div className="text-5xl mb-4">⏰</div>
@@ -291,7 +299,7 @@ export default function PracticePage() {
       )}
 
       {/* Trial timer banner */}
-      {trialSecondsLeft !== null && !trialExpired && (
+      {trialSecondsLeft !== null && !trialExpired && !isAdmin && (
         <div className={`flex items-center justify-between rounded-xl px-4 py-2 mb-3 text-xs font-semibold ${trialSecondsLeft < 300 ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
           <span>⏱ Free Trial</span>
           <span>{Math.floor(trialSecondsLeft/60)}:{String(trialSecondsLeft%60).padStart(2,'0')} remaining</span>

@@ -15,11 +15,14 @@ const AVATAR: Record<string, string> = {
   PRODUCT_MANAGER: '/panelists/product_manager.jpg',
   EXEC_DIRECTOR: '/panelists/exec_director.jpg',
 };
-function PanelAvatar({ archetype, emoji, size = 56, active = true }: { archetype: string; emoji?: string; size?: number; active?: boolean }) {
+function PanelAvatar({ archetype, emoji, size = 56, active = true, speaking = false }: { archetype: string; emoji?: string; size?: number; active?: boolean; speaking?: boolean }) {
   const src = AVATAR[archetype];
   return (
     <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
-      border: `2.5px solid ${active ? GOLD : '#e5e7eb'}`, background: '#fff', boxShadow: active ? `0 2px 10px ${NAVY}22` : 'none' }}>
+      border: `2.5px solid ${active ? GOLD : '#e5e7eb'}`, background: '#fff',
+      boxShadow: active ? `0 2px 10px ${NAVY}22` : 'none',
+      animation: speaking ? 'speakNod 1.4s ease-in-out infinite' : 'none',
+      transformOrigin: 'bottom center' }}>
       {src ? <img src={src} alt={archetype} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
            : <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: size * 0.5 }}>{emoji}</div>}
     </div>
@@ -226,16 +229,27 @@ export default function InterviewPage() {
         </div>
       </div>
 
-      {/* current panelist question */}
-      <div style={{ background: '#fff', border: `2px solid ${NAVY}`, borderRadius: 18, padding: 20, marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-          <PanelAvatar archetype={question.panelist.archetype} emoji={question.panelist.avatar} size={54} />
-          <div>
-            <p style={{ fontWeight: 800, color: NAVY, margin: 0, fontSize: 14 }}>{question.panelist.role}</p>
-            <p style={{ fontSize: 11, color: '#6b7280', margin: 0 }}>{question.panelist.focus}</p>
+      {/* Immersive scene: room backdrop + speaking panelist + speech bubble */}
+      <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', marginBottom: 16, border: `1px solid #e5e7eb`,
+        backgroundImage: 'url(/panelists/room.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(27,54,93,.30) 0%, rgba(248,249,250,.86) 62%, #F8F9FA 100%)' }} />
+        <div style={{ position: 'relative', padding: '20px 18px 18px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <div key={question.questionNumber} style={{ animation: 'popIn .35s ease' }}>
+              <PanelAvatar archetype={question.panelist.archetype} emoji={question.panelist.avatar} size={62} speaking />
+            </div>
+            {/* speech bubble */}
+            <div key={'b' + question.questionNumber} style={{ position: 'relative', flex: 1, background: '#fff', border: `2px solid ${NAVY}`, borderRadius: 16, padding: '13px 15px', animation: 'bubbleIn .4s ease' }}>
+              <span style={{ position: 'absolute', left: -9, top: 16, width: 0, height: 0, borderTop: '8px solid transparent', borderBottom: '8px solid transparent', borderRight: `9px solid ${NAVY}` }} />
+              <span style={{ position: 'absolute', left: -6, top: 17, width: 0, height: 0, borderTop: '7px solid transparent', borderBottom: '7px solid transparent', borderRight: '7px solid #fff' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
+                <span style={{ fontWeight: 800, color: NAVY, fontSize: 13 }}>{question.panelist.role}</span>
+                <span style={{ fontSize: 10, color: '#9ca3af' }}>· asking…</span>
+              </div>
+              <p style={{ fontSize: 15.5, fontWeight: 600, color: INK, margin: 0, lineHeight: 1.5 }}>{question.questionText}</p>
+            </div>
           </div>
         </div>
-        <p style={{ fontSize: 16, fontWeight: 600, color: INK, margin: 0, lineHeight: 1.5 }}>{question.questionText}</p>
       </div>
 
       {/* last feedback */}
@@ -263,7 +277,12 @@ export default function InterviewPage() {
         </span>
         {voiceSupported && <span style={{ fontSize: 10, color: '#9ca3af' }}>🎤 voice input available</span>}
       </div>
-      <style>{`@keyframes pulse{0%,100%{box-shadow:0 0 0 4px ${GOLD}44}50%{box-shadow:0 0 0 8px ${GOLD}22}}`}</style>
+      <style>{`
+        @keyframes pulse{0%,100%{box-shadow:0 0 0 4px ${GOLD}44}50%{box-shadow:0 0 0 8px ${GOLD}22}}
+        @keyframes speakNod{0%,100%{transform:translateY(0) rotate(0deg)}25%{transform:translateY(-2px) rotate(-1.5deg)}50%{transform:translateY(1px) rotate(0deg)}75%{transform:translateY(-2px) rotate(1.5deg)}}
+        @keyframes popIn{0%{transform:scale(.7);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+        @keyframes bubbleIn{0%{transform:translateX(10px) scale(.96);opacity:0}100%{transform:translateX(0) scale(1);opacity:1}}
+      `}</style>
       <button onClick={submit} disabled={busy || !answer.trim()} style={{ width: '100%', padding: 14, borderRadius: 12, border: 'none', background: answer.trim() ? NAVY : '#9ca3af', color: '#fff', fontWeight: 800, fontSize: 15, cursor: answer.trim() ? 'pointer' : 'not-allowed', opacity: busy ? .6 : 1 }}>
         {busy ? 'Evaluating…' : progress.turn + 1 >= progress.totalTurns ? 'Submit Final Answer' : 'Submit & Next Question'}
       </button>

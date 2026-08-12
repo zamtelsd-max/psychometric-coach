@@ -57,6 +57,15 @@ export const mockExamsApi = {
   get: (id: string) => api.get(`/mock-exams/${id}`),
 };
 
+export const interviewApi = {
+  panel: () => api.get('/interview/panel'),
+  start: (data: { jobFamily: string; tier: string }) => api.post('/interview/start', data),
+  answer: (sessionId: string, data: { transcript: string; questionText: string; expectedKeywords?: string }) =>
+    api.post(`/interview/${sessionId}/answer`, data),
+  sessions: () => api.get('/interview/sessions'),
+  session: (id: string) => api.get(`/interview/sessions/${id}`),
+};
+
 export const profileApi = {
   get: () => api.get('/profile'),
   studyPlan: () => api.get('/profile/study-plan'),

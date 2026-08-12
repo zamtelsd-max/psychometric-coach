@@ -10,6 +10,7 @@ const navItems = [
   { href: '/library', icon: '📚', label: 'Library' },
   { href: '/practice', icon: '✏️', label: 'Practice' },
   { href: '/mock-exams', icon: '📋', label: 'Mock Exams' },
+  { href: '/interview', icon: '🎤', label: 'Interview Panel' },
   { href: '/profile', icon: '👤', label: 'Profile' },
 ];
 

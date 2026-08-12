@@ -20,6 +20,46 @@ const AD_VIDEOS = [
   },
 ];
 
+function InterviewAdCarousel() {
+  const ADS = [
+    { c: 'tech', label: 'Technical', avatar: 'tech_lead.jpg', role: 'Technical Lead', q: 'How would you design a system to handle a 10x increase in traffic overnight?' },
+    { c: 'hr', label: 'HR & Culture', avatar: 'hr_manager.jpg', role: 'HR & Culture Manager', q: 'Tell me about a time you turned a conflict with a colleague into a win.' },
+    { c: 'product', label: 'Product', avatar: 'product_manager.jpg', role: 'Product Manager', q: 'You have two urgent features and time for one. How do you decide?' },
+    { c: 'exec', label: 'Executive', avatar: 'exec_director.jpg', role: 'Executive Director', q: 'How would your work here move the wider strategy of the business?' },
+  ];
+  const [i, setI] = useState(0);
+  const [typed, setTyped] = useState('');
+  useEffect(() => {
+    const rot = setInterval(() => setI(v => (v + 1) % ADS.length), 5200);
+    return () => clearInterval(rot);
+  }, []);
+  useEffect(() => {
+    setTyped(''); const q = ADS[i].q; let n = 0;
+    const tw = setInterval(() => { setTyped(q.slice(0, ++n)); if (n >= q.length) clearInterval(tw); }, 26);
+    return () => clearInterval(tw);
+  }, [i]);
+  const a = ADS[i];
+  return (
+    <div className="max-w-xl mx-auto mb-8">
+      <div className="rounded-2xl p-5 sm:p-6" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(212,175,55,.35)' }}>
+        <div className="flex items-center gap-3 mb-3">
+          <img src={`/panelists/${a.avatar}`} alt={a.role} className="rounded-full" style={{ width: 52, height: 52, border: '2.5px solid #D4AF37' }} />
+          <div className="text-left">
+            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: '#D4AF37', color: '#1B365D' }}>{a.label}</span>
+            <p className="text-white/70 text-xs mt-1">{a.role} asks…</p>
+          </div>
+        </div>
+        <div className="bg-white text-left rounded-xl p-4 min-h-[76px]" style={{ color: '#212529' }}>
+          <p className="font-semibold" style={{ fontSize: 16, lineHeight: 1.45 }}>{typed}<span style={{ color: '#D4AF37' }}>▌</span></p>
+        </div>
+        <div className="flex justify-center gap-1.5 mt-4">
+          {ADS.map((_, k) => <span key={k} style={{ width: k === i ? 22 : 7, height: 7, borderRadius: 20, background: k === i ? '#D4AF37' : 'rgba(255,255,255,.3)', transition: 'all .3s' }} />)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function VideoShowcase() {
   // Only re-render for active index changes — everything else via DOM refs
   const [active, setActive] = useState(0);
@@ -289,7 +329,7 @@ function LiveChat() {
             <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center font-black text-sm">P</div>
             <div>
               <div className="font-semibold text-sm">PsychometricCoach Support</div>
-              <div className="text-xs text-blue-200 flex items-center gap-1"><span className="w-2 h-2 bg-green-400 rounded-full inline-block"></span> Online · replies in minutes</div>
+              <div className="text-xs text-blue-100 flex items-center gap-1"><span className="w-2 h-2 bg-green-400 rounded-full inline-block"></span> Online · replies in minutes</div>
             </div>
           </div>
 
@@ -389,35 +429,63 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-brand to-blue-900 text-white py-24 px-4">
+      <section className="relative overflow-hidden bg-gradient-to-br from-brand to-brand-dark text-white py-24 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/15 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
             🚀 Now with AI-powered adaptive learning
           </div>
           <h1 className="text-4xl sm:text-6xl font-black leading-tight mb-6">
             Ace Your<br />
-            <span className="text-yellow-300">Psychometric Tests</span>
+            <span className="text-gold">Psychometric Tests</span>
           </h1>
-          <p className="text-xl text-blue-100 max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p className="text-xl text-blue-50 max-w-2xl mx-auto mb-10 leading-relaxed">
             Intelligent, adaptive preparation across 15+ test types. Our AI identifies your weaknesses and builds you a personalised path to test-day confidence.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/register" className="bg-yellow-400 text-gray-900 font-bold px-8 py-4 rounded-2xl text-lg hover:bg-yellow-300 transition-all hover:scale-105">
+            <Link href="/register" className="bg-gold text-brand font-bold px-8 py-4 rounded-2xl text-lg hover:bg-gold-light transition-all hover:scale-105">
               Start Free Today →
             </Link>
             <Link href="/login" className="border-2 border-white/40 text-white font-semibold px-8 py-4 rounded-2xl text-lg hover:bg-white/10">
               Sign In
             </Link>
           </div>
-          <p className="text-blue-200 text-sm mt-6">No credit card required · Free plan available forever</p>
+          <p className="text-blue-100 text-sm mt-6">No credit card required · Free plan available forever</p>
         </div>
         <div className="max-w-3xl mx-auto mt-16 grid grid-cols-3 gap-4">
           {[['5,000+', 'Practice Questions'], ['15', 'Test Categories'], ['10K+', 'Active Learners']].map(([n, l]) => (
             <div key={l} className="bg-white/10 rounded-2xl p-5 text-center">
-              <div className="text-3xl font-black text-yellow-300">{n}</div>
-              <div className="text-sm text-blue-200 mt-1">{l}</div>
+              <div className="text-3xl font-black text-gold">{n}</div>
+              <div className="text-sm text-blue-100 mt-1">{l}</div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ⭐ VIRTUAL INTERVIEW PANEL — flagship feature showcase */}
+      <section className="py-16 px-4" style={{ background: 'linear-gradient(160deg,#1B365D 0%,#12233f 100%)' }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <span className="inline-block text-[11px] font-black uppercase tracking-widest px-3 py-1 rounded-full mb-4" style={{ background:'#D4AF37', color:'#1B365D' }}>New · AI Interview Coach</span>
+            <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">Meet Your Virtual Interview Panel 🎤</h2>
+            <p className="text-blue-50/80 max-w-2xl mx-auto">Face four AI interviewers in a realistic panel — answer by voice or text and get instant STAR-based scoring and coaching. The most realistic interview practice anywhere.</p>
+          </div>
+          <div className="flex justify-center items-end gap-3 sm:gap-6 mb-8">
+            {[['tech_lead','Technical Lead'],['hr_manager','HR & Culture'],['product_manager','Product Manager'],['exec_director','Exec Director']].map(([a,label],i)=>(
+              <div key={a} className="text-center" style={{ transform: i===1||i===2?'translateY(-10px)':'none' }}>
+                <img src={`/panelists/${a}.jpg`} alt={label} className="rounded-full mx-auto"
+                  style={{ width: 'clamp(56px,15vw,96px)', height: 'clamp(56px,15vw,96px)', border:'3px solid #D4AF37', boxShadow:'0 8px 24px rgba(0,0,0,.3)' }} />
+                <p className="text-white text-[10px] sm:text-xs font-bold mt-2">{label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Rotating animated ad preview — 4 categories, each a real question */}
+          <InterviewAdCarousel />
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link href="/register" className="font-bold px-8 py-4 rounded-2xl text-lg text-center transition-all hover:scale-105" style={{ background:'#D4AF37', color:'#1B365D' }}>Try the Interview Panel →</Link>
+            <Link href="/login" className="border-2 border-white/40 text-white font-semibold px-8 py-4 rounded-2xl text-lg text-center hover:bg-white/10">Sign In</Link>
+          </div>
         </div>
       </section>
 
@@ -523,8 +591,8 @@ export default function LandingPage() {
       <section className="py-20 px-4 bg-brand text-white text-center">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-3xl font-black mb-4">Ready to start practising?</h2>
-          <p className="text-blue-100 mb-8">Join thousands of candidates who improved their scores with PsychometricCoach.</p>
-          <Link href="/register" className="inline-block bg-yellow-400 text-gray-900 font-bold px-10 py-4 rounded-2xl text-lg hover:bg-yellow-300 hover:scale-105 transition-all">
+          <p className="text-blue-50 mb-8">Join thousands of candidates who improved their scores with PsychometricCoach.</p>
+          <Link href="/register" className="inline-block bg-gold text-brand font-bold px-10 py-4 rounded-2xl text-lg hover:bg-gold-light hover:scale-105 transition-all">
             Get Started — It is Free →
           </Link>
         </div>

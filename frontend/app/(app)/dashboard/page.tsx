@@ -83,6 +83,29 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* ⭐ Featured: Virtual Interview Panel */}
+      <Link href="/interview" className="block mb-4 group">
+        <div className="relative overflow-hidden rounded-2xl p-5 flex items-center gap-4"
+          style={{ background: 'linear-gradient(120deg,#1B365D 0%,#2a4d80 55%,#1B365D 100%)' }}>
+          <div className="absolute -right-6 -top-8 w-32 h-32 rounded-full" style={{ background: 'radial-gradient(circle,#D4AF3733,transparent 70%)' }} />
+          <div className="flex -space-x-3 shrink-0">
+            {['tech_lead','hr_manager','product_manager','exec_director'].map((a,i)=>(
+              <img key={a} src={`/panelists/${a}.jpg`} alt="panelist" width={44} height={44}
+                className="rounded-full border-2" style={{ borderColor: '#D4AF37', zIndex: 4-i }} />
+            ))}
+          </div>
+          <div className="flex-1 min-w-0 relative">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background:'#D4AF37', color:'#1B365D' }}>New</span>
+              <span className="text-white/70 text-[11px]">AI-powered</span>
+            </div>
+            <h3 className="text-white font-black text-lg leading-tight mt-1">Virtual Interview Panel 🎤</h3>
+            <p className="text-white/80 text-xs mt-0.5">Face 4 AI interviewers · live STAR scoring · voice or text</p>
+          </div>
+          <span className="relative shrink-0 text-white font-bold text-sm px-4 py-2 rounded-xl group-hover:scale-105 transition" style={{ background:'#D4AF37', color:'#1B365D' }}>Start →</span>
+        </div>
+      </Link>
+
       {/* Quick stats */}
       <div className="grid grid-cols-3 gap-3 mb-4">
         {[

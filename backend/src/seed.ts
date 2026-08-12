@@ -1,1 +1,1 @@
-import * as dotenv from '../backend/node_modules/dotenv/lib/main.js';
+import * as dotenv from 'dotenv';

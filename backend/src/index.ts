@@ -20,8 +20,10 @@ import logger from './lib/logger';
 const app = express();
 const PORT = process.env.PORT || 3010;
 
-// Trust Caddy reverse proxy (loopback only) — MUST be before rate limiters
-app.set('trust proxy', 'loopback');
+// Trust reverse proxy (Caddy/Cloudflare on VM, or Northflank's proxy) — MUST be before rate limiters.
+// Trust the first proxy hop so express-rate-limit reads the correct client IP from X-Forwarded-For
+// without throwing ERR_ERL_UNEXPECTED_X_FORWARDED_FOR.
+app.set('trust proxy', 1);
 
 // Security
 app.use(helmet({

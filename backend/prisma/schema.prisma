@@ -41,7 +41,8 @@ model Category {
   color          String         @default("#0A528A")
   assessmentType AssessmentType @default(APTITUDE)
   examType       ExamType?
-  targetLevels   String[]       @default([]) // e.g. ["secondary","graduate","professional"]
+  targetLevels   String[]       @default([])
+  isStudentOnly  Boolean        @default(false)
   targetRoles    String[]       @default([]) // e.g. ["accountant","nurse","engineer"]
   isFreeTrialOnly Boolean       @default(false)
   trialDurationMin Int          @default(30)
@@ -162,6 +163,10 @@ enum Plan {
   TRIAL
   PREMIUM
   ENTERPRISE
+  STUDENT
+  WEEK
+  MONTH
+  YEAR
 
   @@schema("pc")
 }
@@ -322,5 +327,87 @@ enum AdEventType {
   IMPRESSION
   CLICK
 
+  @@schema("pc")
+}
+
+// ═══ Virtual Interview Panelist (SRS 2026-08) ═══════════════════════════════
+model InterviewQuestion {
+  id              String   @id @default(cuid())
+  archetype       String   // TECH_LEAD | HR_MANAGER | PRODUCT_MANAGER | EXEC_DIRECTOR
+  jobFamily       String   // e.g. Software Engineering, Sales, Finance, General
+  tier            String   @default("Mid")  // Junior | Mid | Senior | Executive
+  difficulty      Int      @default(2)      // 1-5
+  questionText    String
+  expectedKeywords String? // comma-separated keyword matrix for semantic scoring
+  followUp        String?
+  createdAt       DateTime @default(now())
+
+  @@index([archetype, jobFamily, tier])
+  @@schema("pc")
+}
+
+model InterviewSession {
+  id             String   @id @default(cuid())
+  userId         String
+  jobFamily      String
+  tier           String
+  status         String   @default("in_progress") // in_progress | completed
+  currentRound   Int      @default(1)             // 1-4
+  currentTurn    Int      @default(0)             // 0-16
+  aggregateScore Float?
+  technicalAvg   Float?
+  structuralAvg  Float?
+  fluencyAvg     Float?
+  growthDelta    Float?
+  summary        String?
+  createdAt      DateTime @default(now())
+  completedAt    DateTime?
+  responses      InterviewResponse[]
+
+  @@index([userId])
+  @@schema("pc")
+}
+
+model InterviewResponse {
+  id             String   @id @default(cuid())
+  sessionId      String
+  session        InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  round          Int
+  turn           Int
+  archetype      String
+  questionText   String
+  transcript     String   // user's answer
+  technicalScore Float    @default(0)
+  structuralScore Float   @default(0)  // STAR compliance
+  fluencyScore   Float    @default(0)
+  starSituation  Boolean  @default(false)
+  starTask       Boolean  @default(false)
+  starAction     Boolean  @default(false)
+  starResult     Boolean  @default(false)
+  feedback       String?
+  createdAt      DateTime @default(now())
+
+  @@index([sessionId])
+  @@schema("pc")
+}
+
+model UserPayment {
+  id            String   @id @default(cuid())
+  userId        String
+  plan          Plan
+  amount        Float
+  currency      String   @default("USD")
+  provider      String
+  providerRef   String?
+  status        String   @default("pending")
+  planStartsAt  DateTime @default(now())
+  planExpiresAt DateTime
+  createdAt     DateTime @default(now())
+  amountZmw     Float?
+  operator      String?
+  phone         String?
+  referenceNo   String?  @unique
+  transactionId String?
+  @@map("user_payments")
   @@schema("pc")
 }

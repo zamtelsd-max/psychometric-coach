@@ -6,6 +6,34 @@ import { authenticate, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
+// ── Dodo Payments config (hosted checkout; merchant-of-record cards) ───────────
+const DODO = {
+  base: process.env.DODO_BASE || 'https://test.dodopayments.com',
+  key: process.env.DODO_API_KEY || '',
+  products: {
+    'shl-prep': process.env.DODO_PROD_SHL || 'pdt_0NlIpwjo94EOSBoCZ21M7',
+    'korn-ferry-prep': process.env.DODO_PROD_KORNFERRY || 'pdt_0NlIpwpMdGmwD5ibjBGbR',
+    'predictive-index-prep': process.env.DODO_PROD_PI || 'pdt_0NlIpwuCZBRWgvqBDjeZB',
+  } as Record<string, string>,
+  premiumProduct: process.env.DODO_PROD_PREMIUM || 'pdt_0NlIpwfCbROEWm1DoCMQe',
+  auditProduct: process.env.DODO_PROD_AUDIT || 'pdt_0NlIpwz0Ct7nof4BIOeaq',
+};
+async function dodoCheckout(productId: string, returnUrl: string, metadata: Record<string, string>): Promise<{ url?: string; sessionId?: string; error?: string }> {
+  if (!DODO.key) return { error: 'Dodo not configured' };
+  try {
+    const ac = new AbortController(); const to = setTimeout(() => ac.abort(), 20000);
+    const r = await fetch(`${DODO.base}/checkouts`, {
+      method: 'POST', signal: ac.signal,
+      headers: { 'Authorization': `Bearer ${DODO.key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ product_cart: [{ product_id: productId, quantity: 1 }], return_url: returnUrl, metadata }),
+    });
+    clearTimeout(to);
+    const d: any = await r.json().catch(() => ({}));
+    if (d.checkout_url) return { url: d.checkout_url, sessionId: d.session_id };
+    return { error: d.error || 'checkout failed' };
+  } catch (e: any) { return { error: e?.message || 'request failed' }; }
+}
+
 // ── ZynlePay (mobile-money C2B) config ──────────────────────────────────────
 const ZP = {
   base: process.env.ZYNLEPAY_BASE || 'https://sandbox.zynlepay.com/zynlepay/jsonapi',
@@ -131,6 +159,60 @@ router.get('/passports/status/:ref', async (req: Request, res: Response): Promis
   res.json({ status: p.status,
     downloadUrl: p.status === 'paid' ? `https://www.psychometriccoach.com/api/v1/enterprise/passports/download/${p.signedToken}` : null,
     expiresAt: p.status === 'paid' ? p.tokenExpiry : null });
+});
+
+// ── Dodo hosted checkout for a passport (cards / international) ────────────────
+router.post('/passports/:slug/dodo-checkout', async (req: Request, res: Response): Promise<void> => {
+  if (!FLAGS.passports) { res.status(404).json({ error: 'disabled' }); return; }
+  const { email } = req.body || {};
+  if (!email) { res.status(400).json({ error: 'email required' }); return; }
+  const passport = await prisma.digitalPassport.findUnique({ where: { slug: req.params.slug } });
+  if (!passport || !passport.active) { res.status(404).json({ error: 'Passport not found' }); return; }
+  const productId = DODO.products[req.params.slug];
+  if (!productId) { res.status(400).json({ error: 'No Dodo product mapped for this passport' }); return; }
+  const reference = 'PP' + crypto.randomBytes(5).toString('hex').toUpperCase();
+  const signedToken = crypto.randomBytes(24).toString('hex');
+  const tokenExpiry = new Date(Date.now() + 72 * 60 * 60 * 1000);
+  await prisma.passportPurchase.create({
+    data: { passportId: passport.id, email: String(email).toLowerCase(), amount: passport.priceUsd,
+      provider: 'dodo', providerRef: reference, status: 'pending', signedToken, tokenExpiry },
+  });
+  const ret = `https://www.psychometriccoach.com/passports?ref=${reference}`;
+  const co = await dodoCheckout(productId, ret, { reference, kind: 'passport', slug: req.params.slug, email: String(email).toLowerCase() });
+  if (co.error || !co.url) { res.status(502).json({ error: co.error || 'Could not start checkout' }); return; }
+  res.json({ success: true, reference, checkoutUrl: co.url });
+});
+
+// ── Dodo webhook — confirm payment, release signed URL / activate plan ────────
+router.post('/dodo/webhook', async (req: Request, res: Response): Promise<void> => {
+  const evt = req.body || {};
+  const type = evt.type || evt.event_type || '';
+  const data = evt.data || evt;
+  const meta = data?.metadata || data?.payment?.metadata || {};
+  const paid = /succeeded|completed|active|paid/i.test(String(type)) || /succeeded|completed|paid/i.test(String(data?.status));
+  try {
+    if (paid && meta.kind === 'passport' && meta.reference) {
+      const p = await prisma.passportPurchase.findFirst({ where: { providerRef: String(meta.reference) }, include: { passport: true } });
+      if (p && p.status !== 'paid') {
+        await prisma.passportPurchase.update({ where: { id: p.id }, data: { status: 'paid' } });
+        const link = `https://www.psychometriccoach.com/api/v1/enterprise/passports/download/${p.signedToken}`;
+        emailUser(p.email, `Your ${p.passport.title} is ready`, `Payment received.\n\nDownload your ${p.passport.provider} prep manual (valid 72 hours, single use):\n${link}\n\n— Psychometric Coach`);
+      }
+    }
+    if (paid && meta.kind === 'premium' && meta.userId) {
+      const until = new Date(); until.setMonth(until.getMonth() + 1);
+      await prisma.user.update({ where: { id: String(meta.userId) }, data: { plan: 'PREMIUM', planExpiresAt: until } }).catch(() => {});
+    }
+  } catch (e) { /* idempotent; ignore */ }
+  res.json({ received: true });
+});
+
+// ── Dodo checkout to upgrade the logged-in user to PREMIUM ──────────────────
+router.post('/premium/dodo-checkout', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
+  const ret = 'https://www.psychometriccoach.com/dashboard?upgraded=1';
+  const co = await dodoCheckout(DODO.premiumProduct, ret, { kind: 'premium', userId: req.user!.id, email: req.user!.email });
+  if (co.error || !co.url) { res.status(502).json({ error: co.error || 'Could not start checkout' }); return; }
+  res.json({ success: true, checkoutUrl: co.url });
 });
 
 // Single-use signed download (SR-B2C-12/13/14)

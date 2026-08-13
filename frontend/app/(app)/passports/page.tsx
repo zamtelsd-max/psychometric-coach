@@ -94,7 +94,8 @@ export default function PassportsPage() {
                 </div>
                 <div style={{ textAlign: 'right', minWidth: 90 }}>
                   <div style={{ fontSize: 22, fontWeight: 900, color: BRAND }}>${p.priceUsd}</div>
-                  <button onClick={() => buy(p.slug)} disabled={busy === p.slug} style={{ marginTop: 6, background: GOLD, color: BRAND, fontWeight: 800, padding: '9px 16px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 13, opacity: busy === p.slug ? 0.6 : 1 }}>{busy === p.slug ? 'Processing…' : 'Pay & download'}</button>
+                  <button onClick={() => buy(p.slug)} disabled={busy === p.slug} style={{ marginTop: 6, background: GOLD, color: BRAND, fontWeight: 800, padding: '9px 16px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 13, opacity: busy === p.slug ? 0.6 : 1, display: 'block', width: '100%' }}>{busy === p.slug ? 'Processing…' : 'Mobile money'}</button>
+                  <button onClick={() => payCard(p.slug)} disabled={busy === p.slug} style={{ marginTop: 6, background: BRAND, color: '#fff', fontWeight: 800, padding: '9px 16px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 13, opacity: busy === p.slug ? 0.6 : 1, display: 'block', width: '100%' }}>Pay by card</button>
                 </div>
               </div>
             </div>

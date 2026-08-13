@@ -34,7 +34,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-gray-100 fixed h-full z-40">
         <div className="p-6 border-b border-gray-100">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center text-white font-black text-sm">P</div>
+            <img src="/wanctech-logo.png" alt="Wanctech IT Solutions" className="w-8 h-8 rounded-lg object-cover" />
             <span className="font-bold text-brand">PsychometricCoach</span>
           </Link>
         </div>

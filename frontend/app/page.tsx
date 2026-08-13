@@ -5,6 +5,34 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 // ── Video Showcase ─────────────────────────────────────────────────────────
 const AD_VIDEOS = [
   {
+    src: 'https://depcxnwq.gensparkclaw.com/psychometric-app/ads/interview_tech.mp4',
+    title: 'Virtual Interview Panel',
+    subtitle: 'Technical Lead — answer live, get scored',
+    tag: 'Technical',
+    tagColor: 'bg-brand',
+  },
+  {
+    src: 'https://depcxnwq.gensparkclaw.com/psychometric-app/ads/interview_hr.mp4',
+    title: 'Virtual Interview Panel',
+    subtitle: 'HR & Culture — behavioural STAR practice',
+    tag: 'HR & Culture',
+    tagColor: 'bg-gold',
+  },
+  {
+    src: 'https://depcxnwq.gensparkclaw.com/psychometric-app/ads/interview_product.mp4',
+    title: 'Virtual Interview Panel',
+    subtitle: 'Product Manager — prioritisation & judgement',
+    tag: 'Product',
+    tagColor: 'bg-brand',
+  },
+  {
+    src: 'https://depcxnwq.gensparkclaw.com/psychometric-app/ads/interview_exec.mp4',
+    title: 'Virtual Interview Panel',
+    subtitle: 'Executive Director — strategy & vision',
+    tag: 'Executive',
+    tagColor: 'bg-gold',
+  },
+  {
     src: 'https://depcxnwq.gensparkclaw.com/psychometric-app/ads/psy_ad_extended.mp4',
     title: 'PsychometricCoach',
     subtitle: 'Smart Adaptive Tests for Everyone',
@@ -417,7 +445,7 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-gray-100 px-4 sm:px-8">
         <div className="max-w-6xl mx-auto flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center text-white font-black text-sm">P</div>
+            <img src="/wanctech-logo.png" alt="Wanctech IT Solutions" className="w-8 h-8 rounded-lg object-cover" />
             <span className="font-bold text-brand text-lg">PsychometricCoach</span>
           </div>
           <div className="flex items-center gap-3">
@@ -615,6 +643,7 @@ export default function LandingPage() {
           </div>
           <div className="border-t border-gray-800 pt-6 text-center text-xs text-gray-600">
             © 2026 PsychometricCoach. All rights reserved. · <a href="https://www.psychometriccoach.com" className="hover:text-gray-400">www.psychometriccoach.com</a>
+            <span className="flex items-center justify-center gap-2 mt-3 opacity-80"><img src="/wanctech-logo.png" alt="Wanctech" className="w-5 h-5 rounded object-cover" /> A Wanctech IT Solutions product</span>
           </div>
         </div>
       </footer>

@@ -15,6 +15,8 @@ import profileRoutes from './routes/profile';
 import bookmarksRoutes from './routes/bookmarks';
 import adminRoutes from './routes/admin';
 import supportRoutes from './routes/support';
+import enterpriseRoutes from './routes/enterprise';
+import screeningRoutes from './routes/screening';
 import adsRoutes from './routes/ads';
 import logger from './lib/logger';
 
@@ -108,6 +110,8 @@ app.use('/api/v1/bookmarks',  bookmarksRoutes);
 app.use('/api/v1/admin',      adminRoutes);
 app.use('/api/v1/ads',        adServedLimiter, adsRoutes);
 app.use('/api/support',       supportRoutes);
+app.use('/api/v1/enterprise', enterpriseRoutes);
+app.use('/api/v1/screening',  screeningRoutes);
 
 // ── 404 ──────────────────────────────────────────────────────────────────────
 app.use((_req, res) => {

@@ -413,3 +413,127 @@ model UserPayment {
   @@map("user_payments")
   @@schema("pc")
 }
+
+// ── SRS: B2C Digital Passports (prep manuals w/ single-use 72h signed URLs) ──
+model DigitalPassport {
+  id          String              @id @default(cuid())
+  slug        String              @unique
+  title       String
+  provider    String              // e.g. SHL, Korn Ferry, Predictive Index
+  description String
+  priceUsd    Float
+  fileUrl     String              // source manual (server-only)
+  active      Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  purchases   PassportPurchase[]
+  @@map("digital_passports")
+  @@schema("pc")
+}
+
+model PassportPurchase {
+  id           String          @id @default(cuid())
+  passportId   String
+  passport     DigitalPassport @relation(fields: [passportId], references: [id])
+  userId       String?
+  email        String
+  amount       Float
+  currency     String          @default("USD")
+  provider     String          @default("zynlepay")
+  providerRef  String?
+  status       String          @default("paid")
+  signedToken  String          @unique
+  tokenExpiry  DateTime        // 72h from issuance
+  downloadedAt DateTime?       // single-use: set on first download
+  createdAt    DateTime        @default(now())
+  @@index([signedToken])
+  @@map("passport_purchases")
+  @@schema("pc")
+}
+
+// ── SRS: Human-in-the-loop audit tickets (order-bump add-on) ──
+model AuditTicket {
+  id             String   @id @default(cuid())
+  userId         String?
+  email          String
+  sessionId      String?  // linked interview session
+  recordingRef   String?
+  transcript     String?
+  analytics      Json?
+  status         String   @default("open") // open | in_review | delivered
+  reviewerNotes  String?
+  adjustments    Json?    // 3-point behavioural adjustment list
+  correlationId  String?
+  createdAt      DateTime @default(now())
+  deliveredAt    DateTime?
+  @@index([status])
+  @@map("audit_tickets")
+  @@schema("pc")
+}
+
+// ── SRS: AI Resume-to-Interview Matcher funnel ──
+model ResumeMatch {
+  id            String   @id @default(cuid())
+  email         String?  // captured at gate
+  gateSatisfied Boolean  @default(false)
+  jobDescription String
+  matchScore    Int      @default(0)
+  hardSkills    Json?
+  softSkills    Json?
+  gaps          Json?
+  jobFamily     String?
+  tier          String?
+  sessionId     String?  // resulting paid VIA session
+  createdAt     DateTime @default(now())
+  @@map("resume_matches")
+  @@schema("pc")
+}
+
+// ── SRS: B2B Secure Enterprise Screening ──
+model Assessment {
+  id            String                @id @default(cuid())
+  recruiterId   String?
+  recruiterEmail String
+  candidateEmail String
+  candidateToken String               @unique
+  role          String
+  difficulty    String                @default("Mid")
+  jobFamily     String                @default("General")
+  status        String                @default("pending") // pending | in_progress | completed
+  seed          String                // for Fisher-Yates uniqueness
+  readingSec    Int                   @default(30)
+  speakingSec   Int                   @default(120)
+  createdAt     DateTime              @default(now())
+  startedAt     DateTime?
+  completedAt   DateTime?
+  questions     AssessmentQuestion[]
+  violations    ViolationLog[]
+  @@index([candidateToken])
+  @@map("assessments")
+  @@schema("pc")
+}
+
+model AssessmentQuestion {
+  id           String     @id @default(cuid())
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+  ordinal      Int
+  questionText String
+  answer       String?
+  answeredAt   DateTime?
+  @@index([assessmentId])
+  @@map("assessment_questions")
+  @@schema("pc")
+}
+
+model ViolationLog {
+  id           String     @id @default(cuid())
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+  type         String     // MULTI_FACE | FACE_ABSENT | GAZE_DIVERSION | FULLSCREEN_EXIT | CURSOR_ESCAPE | VISIBILITY | CLIPBOARD
+  detail       String?
+  correlationId String?
+  createdAt    DateTime   @default(now())
+  @@index([assessmentId])
+  @@map("violation_logs")
+  @@schema("pc")
+}

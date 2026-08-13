@@ -6,8 +6,10 @@ const BRAND = '#1B365D', GOLD = '#D4AF37';
 
 export default function PassportsPage() {
   const [passports, setPassports] = useState<any[]>([]);
-  const [buying, setBuying] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [operator, setOperator] = useState('airtel');
   const [bump, setBump] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [err, setErr] = useState('');
@@ -15,9 +17,13 @@ export default function PassportsPage() {
   useEffect(() => { enterpriseApi.passports().then(r => setPassports(r.data.passports || [])).catch(() => {}); }, []);
 
   const buy = async (slug: string) => {
-    setErr(''); if (!email.trim()) { setErr('Enter your email to receive the download link.'); return; }
-    try { const { data } = await enterpriseApi.buyPassport(slug, email); setResult(data); }
-    catch (e: any) { setErr(e?.response?.data?.error || 'Purchase failed.'); }
+    setErr('');
+    if (!email.trim()) { setErr('Enter your email to receive the download link.'); return; }
+    if (!phone.trim()) { setErr('Enter your mobile-money number.'); return; }
+    setBusy(slug);
+    try { const { data } = await enterpriseApi.checkoutPassport(slug, email, phone, operator); setResult(data); }
+    catch (e: any) { setErr(e?.response?.data?.error || 'Payment could not be completed — approve the prompt on your phone and try again.'); }
+    finally { setBusy(null); }
   };
 
   return (
@@ -36,9 +42,19 @@ export default function PassportsPage() {
         </div>
       ) : (
         <>
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8, marginBottom: 16 }}>
             <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="Email for your download link"
               style={{ width: '100%', padding: 12, border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }} />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <select value={operator} onChange={e => setOperator(e.target.value)} style={{ padding: 12, border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }}>
+                <option value="airtel">Airtel Money</option>
+                <option value="mtn">MTN MoMo</option>
+                <option value="zamtel">Zamtel Kwacha</option>
+              </select>
+              <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Mobile money number (e.g. 097…)"
+                style={{ flex: 1, padding: 12, border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }} />
+            </div>
+            <p style={{ fontSize: 12, color: '#94a3b8', margin: 0 }}>You&apos;ll get a prompt on your phone to approve the payment.</p>
           </div>
           {passports.map(p => (
             <div key={p.id} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 16, padding: 18, marginBottom: 12 }}>
@@ -50,7 +66,7 @@ export default function PassportsPage() {
                 </div>
                 <div style={{ textAlign: 'right', minWidth: 90 }}>
                   <div style={{ fontSize: 22, fontWeight: 900, color: BRAND }}>${p.priceUsd}</div>
-                  <button onClick={() => buy(p.slug)} style={{ marginTop: 6, background: GOLD, color: BRAND, fontWeight: 800, padding: '9px 16px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 13 }}>Buy &amp; download</button>
+                  <button onClick={() => buy(p.slug)} disabled={busy === p.slug} style={{ marginTop: 6, background: GOLD, color: BRAND, fontWeight: 800, padding: '9px 16px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 13, opacity: busy === p.slug ? 0.6 : 1 }}>{busy === p.slug ? 'Processing…' : 'Pay & download'}</button>
                 </div>
               </div>
             </div>

@@ -40,6 +40,7 @@ export const enterpriseApi = {
   flags: () => api.get('/enterprise/flags'),
   passports: () => api.get('/enterprise/passports'),
   buyPassport: (slug: string, email: string, providerRef?: string) => api.post(`/enterprise/passports/${slug}/purchase`, { email, providerRef }),
+  checkoutPassport: (slug: string, email: string, phone: string, operator: string) => api.post(`/enterprise/passports/${slug}/checkout`, { email, phone, operator }),
   analyzeResume: (resumeText: string, jobDescription: string) => api.post('/enterprise/matcher/analyze', { resumeText, jobDescription }),
   unlockMatch: (matchId: string, email: string) => api.post(`/enterprise/matcher/${matchId}/unlock`, { email }),
   enqueueAudit: (sessionId?: string, recordingRef?: string) => api.post('/enterprise/audit/enqueue', { sessionId, recordingRef }),

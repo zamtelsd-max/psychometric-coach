@@ -5,45 +5,38 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 // ── Video Showcase ─────────────────────────────────────────────────────────
 const AD_VIDEOS = [
   {
-    src: 'https://depcxnwq.gensparkclaw.com/psychometric-app/ads/interview_tech.mp4',
+    src: 'https://depcxnwq.gensparkclaw.com/psychometric-app/ads/feature_interview.mp4',
     title: 'Virtual Interview Panel',
-    subtitle: 'Technical Lead — answer live, get scored',
-    tag: 'Technical',
+    subtitle: 'Face 4 AI interviewers · instant STAR scoring',
+    tag: '🎤 Interview Panel',
     tagColor: 'bg-brand',
   },
   {
-    src: 'https://depcxnwq.gensparkclaw.com/psychometric-app/ads/interview_hr.mp4',
-    title: 'Virtual Interview Panel',
-    subtitle: 'HR & Culture — behavioural STAR practice',
-    tag: 'HR & Culture',
+    src: 'https://depcxnwq.gensparkclaw.com/psychometric-app/ads/feature_matcher.mp4',
+    title: 'AI Resume Matcher',
+    subtitle: 'Score your job fit & fix your gaps',
+    tag: '🎯 Resume Matcher',
     tagColor: 'bg-gold',
   },
   {
-    src: 'https://depcxnwq.gensparkclaw.com/psychometric-app/ads/interview_product.mp4',
-    title: 'Virtual Interview Panel',
-    subtitle: 'Product Manager — prioritisation & judgement',
-    tag: 'Product',
+    src: 'https://depcxnwq.gensparkclaw.com/psychometric-app/ads/feature_passports.mp4',
+    title: 'Prep Passports',
+    subtitle: 'SHL · Korn Ferry · PI — instant download',
+    tag: '🎫 Prep Passports',
     tagColor: 'bg-brand',
   },
   {
-    src: 'https://depcxnwq.gensparkclaw.com/psychometric-app/ads/interview_exec.mp4',
-    title: 'Virtual Interview Panel',
-    subtitle: 'Executive Director — strategy & vision',
-    tag: 'Executive',
+    src: 'https://depcxnwq.gensparkclaw.com/psychometric-app/ads/feature_panelist.mp4',
+    title: 'Virtual Interview Panelist',
+    subtitle: 'Your personal panel — asks, listens, coaches',
+    tag: '🎙️ Virtual Panelist',
     tagColor: 'bg-gold',
   },
   {
-    src: 'https://depcxnwq.gensparkclaw.com/psychometric-app/ads/psy_ad_extended.mp4',
-    title: 'PsychometricCoach',
-    subtitle: 'Smart Adaptive Tests for Everyone',
-    tag: 'General',
-    tagColor: 'bg-brand',
-  },
-  {
-    src: 'https://depcxnwq.gensparkclaw.com/psychometric-app/ads/nurse_ad_extended.mp4',
-    title: 'For Healthcare Professionals',
-    subtitle: 'OET · IELTS · TOEFL — Pass & Work Abroad',
-    tag: 'Nurses & Doctors',
+    src: 'https://depcxnwq.gensparkclaw.com/psychometric-app/ads/feature_recruiter.mp4',
+    title: 'Recruiter Console',
+    subtitle: 'Secure proctored screening · AI anti-cheat',
+    tag: '🛡️ For Employers',
     tagColor: 'bg-emerald-600',
   },
 ];
@@ -643,7 +636,7 @@ export default function LandingPage() {
           </div>
           <div className="border-t border-gray-800 pt-6 text-center text-xs text-gray-600">
             © 2026 PsychometricCoach. All rights reserved. · <a href="https://www.psychometriccoach.com" className="hover:text-gray-400">www.psychometriccoach.com</a>
-            <span className="flex items-center justify-center gap-2 mt-3 opacity-80"><img src="/wanctech-logo.png" alt="Wanctech" className="w-5 h-5 rounded object-cover" /> A Wanctech IT Solutions product</span>
+            <span className="flex items-center justify-center gap-2 mt-3 opacity-80"><img src="/wanctech-logo.png" alt="Wanctech IT Solutions" className="w-5 h-5 rounded object-cover" /> Powered by Wanctech IT Solutions</span>
           </div>
         </div>
       </footer>

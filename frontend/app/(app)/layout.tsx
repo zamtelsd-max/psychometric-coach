@@ -11,6 +11,9 @@ const navItems = [
   { href: '/practice', icon: '✏️', label: 'Practice' },
   { href: '/mock-exams', icon: '📋', label: 'Mock Exams' },
   { href: '/interview', icon: '🎤', label: 'Interview Panel' },
+  { href: '/matcher', icon: '🎯', label: 'Resume Matcher' },
+  { href: '/passports', icon: '🎫', label: 'Prep Passports' },
+  { href: '/screening-admin', icon: '🛡️', label: 'Recruiter Console' },
   { href: '/profile', icon: '👤', label: 'Profile' },
 ];
 

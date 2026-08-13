@@ -36,6 +36,26 @@ export const authApi = {
   resetPassword: (token: string, password: string) => api.post('/auth/reset-password', { token, password }),
 };
 
+export const enterpriseApi = {
+  flags: () => api.get('/enterprise/flags'),
+  passports: () => api.get('/enterprise/passports'),
+  buyPassport: (slug: string, email: string, providerRef?: string) => api.post(`/enterprise/passports/${slug}/purchase`, { email, providerRef }),
+  analyzeResume: (resumeText: string, jobDescription: string) => api.post('/enterprise/matcher/analyze', { resumeText, jobDescription }),
+  unlockMatch: (matchId: string, email: string) => api.post(`/enterprise/matcher/${matchId}/unlock`, { email }),
+  enqueueAudit: (sessionId?: string, recordingRef?: string) => api.post('/enterprise/audit/enqueue', { sessionId, recordingRef }),
+};
+
+export const screeningApi = {
+  createAssessment: (data: any) => api.post('/screening/assessments', data),
+  listAssessments: () => api.get('/screening/assessments'),
+  report: (id: string) => api.get(`/screening/assessments/${id}/report`),
+  candidate: (id: string, t: string) => api.get(`/screening/candidate/${id}?t=${encodeURIComponent(t)}`),
+  start: (id: string, t: string) => api.post(`/screening/candidate/${id}/start`, { t }),
+  answer: (id: string, t: string, questionId: string, answer: string) => api.post(`/screening/candidate/${id}/answer`, { t, questionId, answer }),
+  submit: (id: string, t: string) => api.post(`/screening/candidate/${id}/submit`, { t }),
+  logViolation: (id: string, t: string, type: string, detail?: string) => api.post(`/screening/${id}/log-violation`, { t, type, detail }),
+};
+
 export const questionsApi = {
   categories: () => api.get('/questions/categories'),
   diagnostic: () => api.get('/questions/diagnostic'),

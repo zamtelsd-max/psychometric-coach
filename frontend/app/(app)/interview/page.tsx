@@ -35,6 +35,14 @@ export default function InterviewPage() {
   const [tiers, setTiers] = useState<string[]>([]);
   const [jobFamily, setJobFamily] = useState('General');
   const [tier, setTier] = useState('Mid');
+  // SR-B2C-19: pre-init from Resume Matcher via URL params
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const q = new URLSearchParams(window.location.search);
+    const jf = q.get('jobFamily'); const tr = q.get('tier');
+    if (jf) setJobFamily(jf);
+    if (tr) setTier(tr);
+  }, []);
   const [stage, setStage] = useState<'setup' | 'interview' | 'result'>('setup');
   const [sessionId, setSessionId] = useState('');
   const [question, setQuestion] = useState<Question | null>(null);

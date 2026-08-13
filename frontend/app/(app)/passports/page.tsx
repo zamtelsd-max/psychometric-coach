@@ -16,14 +16,34 @@ export default function PassportsPage() {
 
   useEffect(() => { enterpriseApi.passports().then(r => setPassports(r.data.passports || [])).catch(() => {}); }, []);
 
+  const [pending, setPending] = useState<{ ref: string; msg: string } | null>(null);
+
   const buy = async (slug: string) => {
-    setErr('');
+    setErr(''); setPending(null);
     if (!email.trim()) { setErr('Enter your email to receive the download link.'); return; }
     if (!phone.trim()) { setErr('Enter your mobile-money number.'); return; }
     setBusy(slug);
-    try { const { data } = await enterpriseApi.checkoutPassport(slug, email, phone, operator); setResult(data); }
-    catch (e: any) { setErr(e?.response?.data?.error || 'Payment could not be completed — approve the prompt on your phone and try again.'); }
+    try {
+      const { data } = await enterpriseApi.checkoutPassport(slug, email, phone, operator);
+      if (data.pending && data.reference) {
+        setPending({ ref: data.reference, msg: data.message || 'Approve the prompt on your phone…' });
+        pollStatus(data.reference);
+      } else if (data.downloadUrl) { setResult(data); }
+    } catch (e: any) { setErr(e?.response?.data?.error || 'Payment could not be initiated — check the number/operator and try again.'); }
     finally { setBusy(null); }
+  };
+
+  const pollStatus = (ref: string) => {
+    let tries = 0;
+    const iv = setInterval(async () => {
+      tries++;
+      try {
+        const { data } = await enterpriseApi.passportStatus(ref);
+        if (data.status === 'paid' && data.downloadUrl) { clearInterval(iv); setPending(null); setResult(data); }
+        else if (data.status === 'failed') { clearInterval(iv); setPending(null); setErr('Payment was not completed. Please try again.'); }
+      } catch {}
+      if (tries > 40) { clearInterval(iv); } // ~3.3 min
+    }, 5000);
   };
 
   return (
@@ -32,7 +52,15 @@ export default function PassportsPage() {
       <h1 style={{ fontSize: 26, fontWeight: 900, color: BRAND, margin: '12px 0 4px' }}>Instant psychometric prep manuals</h1>
       <p style={{ color: '#64748b', fontSize: 14, marginBottom: 18 }}>Buy once, download instantly. Secure link valid 72 hours, single-use.</p>
 
-      {result ? (
+      {pending && !result ? (
+        <div style={{ background: '#fff', border: `1px solid ${GOLD}`, borderRadius: 16, padding: 24, textAlign: 'center' }}>
+          <div style={{ width: 30, height: 30, border: `3px solid ${GOLD}`, borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto 12px', animation: 'spin 1s linear infinite' }} />
+          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+          <h3 style={{ fontWeight: 800, color: BRAND }}>Waiting for payment approval…</h3>
+          <p style={{ color: '#64748b', fontSize: 14, marginTop: 6 }}>{pending.msg}</p>
+          <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 8 }}>Ref: {pending.ref}. This page will update automatically once approved.</p>
+        </div>
+      ) : result ? (
         <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 16, padding: 24, textAlign: 'center' }}>
           <div style={{ fontSize: 44 }}>✓</div>
           <h2 style={{ fontWeight: 900, color: '#166534' }}>Purchase complete</h2>

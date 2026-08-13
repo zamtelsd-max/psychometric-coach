@@ -13,37 +13,25 @@ const ZP = {
   apiId: process.env.ZYNLEPAY_API_ID || '2399b583-b0ca-4e0b-9175-d81b3d75d79f',
   apiKey: process.env.ZYNLEPAY_API_KEY || 'f56b9ef1-d0b8-4892-b70b-3f98432780b9',
 };
-const ZP_OPERATOR: Record<string, string> = { airtel: 'airtel', mtn: 'mtn', zamtel: 'zamtel' };
 async function usdToZmw(usd: number): Promise<number> {
-  // fixed conservative rate fallback; keep parity with FileShift rate usage
   const rate = Number(process.env.USD_ZMW_RATE || 26);
   return Math.round(usd * rate * 100) / 100;
 }
-async function zynleCollect(params: { amountZmw: number; phone: string; operator: string; reference: string; }): Promise<{ ok: boolean; raw: any; txnId?: string }> {
-  const body = {
-    request: {
-      header: { merchant_id: ZP.merchantId, api_id: ZP.apiId, api_key: ZP.apiKey },
-      details: {
-        method: 'runBillPayment',
-        mobile: params.phone,
-        amount: String(params.amountZmw),
-        reference_no: params.reference,
-        narration: 'PsychometricCoach Prep Passport',
-        operator: ZP_OPERATOR[params.operator] || 'airtel',
-      },
-    },
-  };
+// Initiate a ZynlePay mobile-money collection (async push; rc 120 = approve on phone)
+async function zynleInitiate(params: { amountZmw: number; phone: string; reference: string; email: string; }): Promise<{ code: string; raw: any }> {
+  const body = { auth: { 'merchant-id': ZP.merchantId, 'api-id': ZP.apiId, 'api-key': ZP.apiKey }, data: {
+    method: 'runBillPayment', channel: 'momo', reference_no: params.reference, amount: String(params.amountZmw),
+    currency: 'ZMW', phone_number: String(params.phone), first_name: 'Psychometric', last_name: 'Coach', email: params.email,
+  } };
   try {
-    const ac = new AbortController(); const to = setTimeout(() => ac.abort(), 20000);
+    const ac = new AbortController(); const to = setTimeout(() => ac.abort(), 30000);
     const r = await fetch(ZP.base, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ac.signal });
     clearTimeout(to);
     const data: any = await r.json().catch(() => ({}));
-    const resp = data?.response || data;
-    const code = String(resp?.response_code ?? resp?.status ?? '');
-    const ok = ['100', 'success', 'SUCCESS', '0'].includes(code) || /success/i.test(JSON.stringify(resp));
-    return { ok, raw: resp, txnId: resp?.transaction_id || resp?.txn_id };
+    const code = String(data?.response?.data?.response_code ?? data?.response_code ?? '');
+    return { code, raw: data };
   } catch (e: any) {
-    return { ok: false, raw: { error: e?.message || 'request failed' } };
+    return { code: '', raw: { error: e?.message || 'request failed' } };
   }
 }
 
@@ -102,24 +90,47 @@ router.post('/passports/:slug/checkout', async (req: Request, res: Response): Pr
 
   const reference = 'PP' + crypto.randomBytes(5).toString('hex').toUpperCase();
   const amountZmw = await usdToZmw(passport.priceUsd);
-  // create a pending purchase first (idempotent-ish via unique signedToken)
   const signedToken = crypto.randomBytes(24).toString('hex');
   const tokenExpiry = new Date(Date.now() + 72 * 60 * 60 * 1000);
   const purchase = await prisma.passportPurchase.create({
     data: { passportId: passport.id, email: String(email).toLowerCase(), amount: passport.priceUsd,
-      provider: 'zynlepay', providerRef: reference, status: 'pending', signedToken, tokenExpiry },
+      provider: 'zynlepay', providerRef: reference, status: 'initiated', signedToken, tokenExpiry },
   });
-  const pay = await zynleCollect({ amountZmw, phone: String(phone), operator: String(operator).toLowerCase(), reference });
-  if (!pay.ok) {
-    await prisma.passportPurchase.update({ where: { id: purchase.id }, data: { status: 'failed' } });
-    res.status(402).json({ success: false, error: 'Payment could not be completed. Approve the prompt on your phone and try again.', detail: pay.raw });
+  const pay = await zynleInitiate({ amountZmw, phone: String(phone), reference, email: String(email) });
+  if (pay.code === '120') {
+    // async push sent; wait for callback/status to confirm before releasing download
+    await prisma.passportPurchase.update({ where: { id: purchase.id }, data: { status: 'pending' } });
+    res.json({ success: true, pending: true, reference, amountZmw,
+      message: 'Payment request sent. Approve the prompt on your phone, then your download link will be ready.' });
     return;
   }
-  await prisma.passportPurchase.update({ where: { id: purchase.id }, data: { status: 'paid' } });
-  const link = `https://www.psychometriccoach.com/api/v1/enterprise/passports/download/${signedToken}`;
-  emailUser(email, `Your ${passport.title} is ready`,
-    `Payment received (${amountZmw} ZMW, ref ${reference}).\n\nDownload your ${passport.provider} prep manual (valid 72 hours, single use):\n${link}\n\n— Psychometric Coach`);
-  res.json({ success: true, purchaseId: purchase.id, reference, amountZmw, downloadUrl: link, expiresAt: tokenExpiry });
+  await prisma.passportPurchase.update({ where: { id: purchase.id }, data: { status: 'failed' } });
+  res.status(402).json({ success: false, error: 'Payment could not be initiated. Check the number/operator and try again.', code: pay.code });
+});
+
+// ZynlePay callback — confirms payment (rc 100 / SUCCESS) then releases the signed URL
+router.post('/passports/callback', async (req: Request, res: Response): Promise<void> => {
+  const d = req.body?.response?.data || req.body?.data || req.body || {};
+  const ref = d.reference_no || d.referenceNo; const rc = String(d.response_code ?? '');
+  if (ref) {
+    const p = await prisma.passportPurchase.findFirst({ where: { providerRef: String(ref) }, include: { passport: true } });
+    if (p && p.status !== 'paid' && (rc === '100' || String(d.status).toUpperCase() === 'SUCCESS')) {
+      await prisma.passportPurchase.update({ where: { id: p.id }, data: { status: 'paid' } });
+      const link = `https://www.psychometriccoach.com/api/v1/enterprise/passports/download/${p.signedToken}`;
+      emailUser(p.email, `Your ${p.passport.title} is ready`,
+        `Payment received (ref ${ref}).\n\nDownload your ${p.passport.provider} prep manual (valid 72 hours, single use):\n${link}\n\n— Psychometric Coach`);
+    }
+  }
+  res.json({ response_code: 130 });
+});
+
+// Poll purchase status by reference — returns the download link once paid
+router.get('/passports/status/:ref', async (req: Request, res: Response): Promise<void> => {
+  const p = await prisma.passportPurchase.findFirst({ where: { providerRef: req.params.ref } });
+  if (!p) { res.status(404).json({ error: 'not found' }); return; }
+  res.json({ status: p.status,
+    downloadUrl: p.status === 'paid' ? `https://www.psychometriccoach.com/api/v1/enterprise/passports/download/${p.signedToken}` : null,
+    expiresAt: p.status === 'paid' ? p.tokenExpiry : null });
 });
 
 // Single-use signed download (SR-B2C-12/13/14)

@@ -41,6 +41,7 @@ export const enterpriseApi = {
   passports: () => api.get('/enterprise/passports'),
   buyPassport: (slug: string, email: string, providerRef?: string) => api.post(`/enterprise/passports/${slug}/purchase`, { email, providerRef }),
   checkoutPassport: (slug: string, email: string, phone: string, operator: string) => api.post(`/enterprise/passports/${slug}/checkout`, { email, phone, operator }),
+  passportStatus: (ref: string) => api.get(`/enterprise/passports/status/${ref}`),
   analyzeResume: (resumeText: string, jobDescription: string) => api.post('/enterprise/matcher/analyze', { resumeText, jobDescription }),
   unlockMatch: (matchId: string, email: string) => api.post(`/enterprise/matcher/${matchId}/unlock`, { email }),
   enqueueAudit: (sessionId?: string, recordingRef?: string) => api.post('/enterprise/audit/enqueue', { sessionId, recordingRef }),

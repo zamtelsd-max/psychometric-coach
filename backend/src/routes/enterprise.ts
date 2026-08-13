@@ -183,8 +183,30 @@ router.post('/passports/:slug/dodo-checkout', async (req: Request, res: Response
   res.json({ success: true, reference, checkoutUrl: co.url });
 });
 
+// Verify a Dodo (Standard Webhooks / svix-style) signature
+function verifyDodoSignature(req: Request): boolean {
+  const secret = process.env.DODO_WEBHOOK_SECRET || '';
+  if (!secret) return true; // not configured → don't block (dev)
+  const id = req.header('webhook-id') || '';
+  const ts = req.header('webhook-timestamp') || '';
+  const sigHeader = req.header('webhook-signature') || '';
+  const raw = (req as any).rawBody ? (req as any).rawBody.toString('utf8') : JSON.stringify(req.body || {});
+  if (!id || !ts || !sigHeader) return false;
+  // reject old timestamps (>5 min) to prevent replay
+  const skew = Math.abs(Date.now() / 1000 - Number(ts));
+  if (!Number.isFinite(skew) || skew > 300) return false;
+  const key = Buffer.from(secret.replace(/^whsec_/, ''), 'base64');
+  const expected = crypto.createHmac('sha256', key).update(`${id}.${ts}.${raw}`).digest('base64');
+  // header may contain space-separated "v1,<sig>" tokens
+  return sigHeader.split(' ').some(part => {
+    const s = part.includes(',') ? part.split(',')[1] : part;
+    try { return crypto.timingSafeEqual(Buffer.from(s), Buffer.from(expected)); } catch { return false; }
+  });
+}
+
 // ── Dodo webhook — confirm payment, release signed URL / activate plan ────────
 router.post('/dodo/webhook', async (req: Request, res: Response): Promise<void> => {
+  if (!verifyDodoSignature(req)) { res.status(401).json({ error: 'invalid signature' }); return; }
   const evt = req.body || {};
   const type = evt.type || evt.event_type || '';
   const data = evt.data || evt;

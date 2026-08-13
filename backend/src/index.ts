@@ -76,7 +76,7 @@ const adServedLimiter = rateLimit({
 app.use(limiter);
 
 // Body parsing
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '2mb', verify: (req: any, _res, buf) => { req.rawBody = buf; } }));
 app.use(express.urlencoded({ extended: true }));
 
 // Compression — gzip all responses > 1KB

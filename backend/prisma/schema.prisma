@@ -23,6 +23,8 @@ model User {
   readinessScore Int            @default(0)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+  resetToken       String?
+  resetTokenExpiry DateTime?
   attempts       Attempt[]
   bookmarks      Bookmark[]
   notifications  Notification[]

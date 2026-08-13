@@ -11,7 +11,7 @@ function getLoginError(raw: string | undefined): { title: string; hint: string; 
     return {
       title: 'Incorrect email or password',
       hint: 'Double-check your email address and password. Passwords are case-sensitive.',
-      hintLink: { label: 'Forgot your password? Contact support', href: 'mailto:support@psycometriccoach.online' },
+      hintLink: { label: 'Forgot your password? Reset it here →', href: '/reset-password' },
     };
   }
   if (msg.includes('not found') || msg.includes('no account') || msg.includes('user not')) {
@@ -154,6 +154,9 @@ export default function LoginPage() {
                 >
                   {showPass ? '🙈' : '👁️'}
                 </button>
+              </div>
+              <div className="text-right mt-1.5">
+                <Link href="/reset-password" className="text-xs text-brand font-semibold hover:underline">Forgot password?</Link>
               </div>
             </div>
 

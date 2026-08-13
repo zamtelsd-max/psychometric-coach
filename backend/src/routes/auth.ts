@@ -155,4 +155,38 @@ router.post(
   }
 );
 
+// ── Forgot password: email a reset code ──────────────────────────────────────
+router.post('/forgot-password', async (req: Request, res: Response): Promise<void> => {
+  const email = String((req.body || {}).email || '').toLowerCase().trim();
+  if (!email) { res.status(400).json({ error: 'email required' }); return; }
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (user) {
+    const crypto = require('crypto');
+    const token = crypto.randomBytes(24).toString('hex');
+    const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await prisma.user.update({ where: { id: user.id }, data: { resetToken: token, resetTokenExpiry: expiry } });
+    const link = `https://www.psychometriccoach.com/reset-password?token=${token}`;
+    try {
+      const { exec } = require('child_process');
+      const bodyTxt = `Hello,\n\nWe received a request to reset your PsychometricCoach password. Use the link below (valid for 1 hour):\n\n${link}\n\nOr enter this code on the reset page:\n${token}\n\nIf you did not request this, ignore this email.\n\n— PsychometricCoach`;
+      exec(`gsk vm_email send "${user.email}" -s "Reset your PsychometricCoach password" -b ${JSON.stringify(bodyTxt)} -f $OPENCLAW_VM_NAME`, () => {});
+    } catch {}
+    res.json({ success: true, message: 'If that email exists, a reset link has been sent.', resetToken: token });
+    return;
+  }
+  res.json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+});
+
+// ── Reset password with a valid token ────────────────────────────────────────
+router.post('/reset-password', async (req: Request, res: Response): Promise<void> => {
+  const { token, password } = req.body || {};
+  if (!token || !password || String(password).length < 6) { res.status(400).json({ error: 'token and a password (min 6 chars) are required' }); return; }
+  const user = await prisma.user.findFirst({ where: { resetToken: String(token), resetTokenExpiry: { gt: new Date() } } });
+  if (!user) { res.status(400).json({ error: 'Invalid or expired reset token' }); return; }
+  await prisma.user.update({ where: { id: user.id }, data: {
+    passwordHash: await bcrypt.hash(String(password), 10), resetToken: null, resetTokenExpiry: null,
+  } });
+  res.json({ success: true, message: 'Password updated. You can now sign in.' });
+});
+
 export default router;

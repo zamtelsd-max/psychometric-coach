@@ -80,10 +80,19 @@ export default function LoginPage() {
       setAuth(res.data.user, res.data.token);
       router.push('/dashboard');
     } catch (err: unknown) {
-      const raw = err && typeof err === 'object' && 'response' in err
-        ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
+      const data = err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { data?: { error?: string; requiresVerification?: boolean } } }).response?.data
         : undefined;
-      setError(getLoginError(raw));
+      const raw = data?.error;
+      if (data?.requiresVerification) {
+        try { await authApi.resendVerification(form.email); } catch {}
+        setError({
+          title: 'Verify your email first',
+          hint: `Your account isn't verified yet. We've re-sent a verification link to ${form.email} — click it, then sign in. (Check your spam folder too.)`,
+        });
+      } else {
+        setError(getLoginError(raw));
+      }
     } finally {
       setLoading(false);
     }

@@ -25,6 +25,9 @@ model User {
   updatedAt      DateTime       @updatedAt
   resetToken       String?
   resetTokenExpiry DateTime?
+  emailVerified    Boolean   @default(false)
+  verifyToken      String?
+  verifyTokenExpiry DateTime?
   attempts       Attempt[]
   bookmarks      Bookmark[]
   notifications  Notification[]

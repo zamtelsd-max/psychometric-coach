@@ -12,6 +12,8 @@ export default function RegisterPage() {
   const [error, setError] = useState<{ title: string; hint: string; isEmailExists?: boolean } | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
+  const [verifySent, setVerifySent] = useState(false);
+  const [resent, setResent] = useState(false);
 
   // Password strength
   const passLen = form.password.length;
@@ -45,6 +47,11 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const res = await authApi.register(form);
+      // Email verification required: no token is issued at registration.
+      if (res.data?.requiresVerification || !res.data?.token) {
+        setVerifySent(true);
+        return;
+      }
       setAuth(res.data.user, res.data.token);
       router.push('/diagnostic');
     } catch (err: unknown) {
@@ -77,6 +84,29 @@ export default function RegisterPage() {
     sessionStorage.setItem('psy_prefill_email', form.email);
     router.push('/login');
   };
+
+  if (verifySent) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'linear-gradient(160deg,#1B365D 0%,#12233f 100%)' }}>
+        <div style={{ maxWidth: 460, width: '100%', background: '#fff', borderRadius: 18, padding: 36, textAlign: 'center' }}>
+          <div style={{ fontSize: 54 }}>📧</div>
+          <h1 style={{ fontSize: 24, fontWeight: 900, color: '#1B365D', margin: '10px 0 8px' }}>Verify your email</h1>
+          <p style={{ color: '#475569', fontSize: 15, lineHeight: 1.55 }}>
+            We&apos;ve sent a verification link to <b>{form.email}</b>. Click the link in that email to activate your account, then sign in.
+          </p>
+          <p style={{ color: '#94a3b8', fontSize: 13, marginTop: 12 }}>Can&apos;t find it? Check your spam folder.</p>
+          <button
+            onClick={async () => { try { await authApi.resendVerification(form.email); setResent(true); } catch { setResent(true); } }}
+            style={{ marginTop: 18, background: '#D4AF37', color: '#1B365D', fontWeight: 800, border: 'none', padding: '11px 20px', borderRadius: 10, cursor: 'pointer', width: '100%' }}>
+            {resent ? 'Verification email re-sent ✓' : 'Resend verification email'}
+          </button>
+          <button onClick={() => router.push('/login')} style={{ marginTop: 10, background: 'transparent', color: '#1B365D', fontWeight: 700, border: '1px solid #1B365D', padding: '11px 20px', borderRadius: 10, cursor: 'pointer', width: '100%' }}>
+            Go to sign in
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center p-4">

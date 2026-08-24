@@ -268,4 +268,56 @@ router.get('/flags', ...adminOnly, async (_req: AuthRequest, res: Response): Pro
   }
 });
 
+// ── Subscriber tracking panel (admin-key gated, no login required) ───────────
+router.get('/subscribers', async (req: AuthRequest, res: Response): Promise<void> => {
+  const key = req.headers['x-admin-key'] || req.query.key;
+  if (key !== (process.env.PSY_ADMIN_KEY || 'psy-admin-2026')) {
+    res.status(403).json({ error: 'forbidden' });
+    return;
+  }
+  try {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const day30 = new Date(now.getTime() - 30 * 86400000);
+    const paidPlans: any[] = ['PREMIUM', 'ENTERPRISE', 'STUDENT', 'WEEK', 'MONTH', 'YEAR'];
+    const [total, free, premium, enterprise, newThisMonth, active30, users, purchases, revAgg] = await Promise.all([
+      prisma.user.count(),
+      prisma.user.count({ where: { plan: 'FREE' } }),
+      prisma.user.count({ where: { plan: 'PREMIUM' } }),
+      prisma.user.count({ where: { plan: 'ENTERPRISE' } }),
+      prisma.user.count({ where: { createdAt: { gte: monthStart } } }),
+      prisma.user.count({ where: { lastActiveAt: { gte: day30 } } }),
+      prisma.user.findMany({
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, email: true, name: true, role: true, plan: true, planExpiresAt: true, readinessScore: true, streakDays: true, createdAt: true, lastActiveAt: true },
+      }),
+      prisma.passportPurchase.findMany({
+        orderBy: { createdAt: 'desc' }, take: 100,
+        select: { email: true, amount: true, currency: true, provider: true, status: true, passportId: true, createdAt: true },
+      }),
+      prisma.passportPurchase.aggregate({ _sum: { amount: true }, where: { status: 'paid' } }),
+    ]);
+    const paidUsers = users.filter(u => paidPlans.includes(u.plan)).length;
+    res.json({
+      success: true,
+      stats: {
+        totalUsers: total,
+        paidUsers,
+        freeUsers: free,
+        premiumUsers: premium,
+        enterpriseUsers: enterprise,
+        newThisMonth,
+        activeLast30Days: active30,
+        passportRevenue: revAgg._sum.amount || 0,
+        passportPurchases: purchases.length,
+      },
+      subscribers: users,
+      purchases,
+    });
+  } catch (err) {
+    console.error('admin subscribers error:', err);
+    res.status(500).json({ error: 'stats failed' });
+  }
+});
+
 export default router;

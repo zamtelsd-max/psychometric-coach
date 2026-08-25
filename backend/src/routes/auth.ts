@@ -5,15 +5,32 @@ import { body, validationResult } from 'express-validator';
 import prisma from '../lib/prisma';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import crypto from 'crypto';
-import { exec } from 'child_process';
+// Send email via the VM mail-relay (works from Northflank; gsk is not available in-container).
+async function sendMail(to: string, subject: string, text: string): Promise<boolean> {
+  const url = process.env.MAIL_RELAY_URL;
+  const secret = process.env.MAIL_RELAY_SECRET;
+  if (!url || !secret) {
+    console.error('MAIL_RELAY_URL / MAIL_RELAY_SECRET not set — cannot send email');
+    return false;
+  }
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-relay-secret': secret },
+      body: JSON.stringify({ to, subject, text }),
+    });
+    if (!r.ok) { console.error('mail relay non-200:', r.status); return false; }
+    return true;
+  } catch (e) {
+    console.error('mail relay error:', (e as Error).message);
+    return false;
+  }
+}
 
-// Send an email-verification message via the VM mailer.
 function sendVerificationEmail(email: string, name: string, token: string): void {
   const link = `https://www.psychometriccoach.com/verify-email?token=${token}`;
   const bodyTxt = `Hi ${name || ''},\n\nWelcome to PsychometricCoach! Please confirm your email address to activate your account (link valid for 24 hours):\n\n${link}\n\nIf you did not create this account, you can ignore this email.\n\n— PsychometricCoach`;
-  try {
-    exec(`gsk vm_email send ${JSON.stringify(email)} -s "Verify your PsychometricCoach email" -b ${JSON.stringify(bodyTxt)} -f $OPENCLAW_VM_NAME`, () => {});
-  } catch {}
+  void sendMail(email, 'Verify your PsychometricCoach email', bodyTxt);
 }
 
 const router = Router();
@@ -191,11 +208,8 @@ router.post('/forgot-password', async (req: Request, res: Response): Promise<voi
     const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
     await prisma.user.update({ where: { id: user.id }, data: { resetToken: token, resetTokenExpiry: expiry } });
     const link = `https://www.psychometriccoach.com/reset-password?token=${token}`;
-    try {
-      const { exec } = require('child_process');
-      const bodyTxt = `Hello,\n\nWe received a request to reset your PsychometricCoach password. Use the link below (valid for 1 hour):\n\n${link}\n\nOr enter this code on the reset page:\n${token}\n\nIf you did not request this, ignore this email.\n\n— PsychometricCoach`;
-      exec(`gsk vm_email send "${user.email}" -s "Reset your PsychometricCoach password" -b ${JSON.stringify(bodyTxt)} -f $OPENCLAW_VM_NAME`, () => {});
-    } catch {}
+    const bodyTxt = `Hello,\n\nWe received a request to reset your PsychometricCoach password. Use the link below (valid for 1 hour):\n\n${link}\n\nOr enter this code on the reset page:\n${token}\n\nIf you did not request this, ignore this email.\n\n— PsychometricCoach`;
+    void sendMail(user.email, 'Reset your PsychometricCoach password', bodyTxt);
     res.json({ success: true, message: 'If that email exists, a reset link has been sent.', resetToken: token });
     return;
   }

@@ -29,7 +29,8 @@ router.post('/', authenticate, [body('title').isString().notEmpty(), body('quest
 
 // GET /api/v1/testbuilder — list my assembled tests
 router.get('/', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
-  res.json({ tests: await prisma.customTest.findMany({ where: { createdBy: req.user!.id }, orderBy: { createdAt: 'desc' }, include: { _count: { select: { links: true } } } }) });
+  const isAdmin = ['ADMIN', 'SUPER_ADMIN'].includes(req.user!.role);
+  res.json({ tests: await prisma.customTest.findMany({ where: isAdmin ? {} : { createdBy: req.user!.id }, orderBy: { createdAt: 'desc' }, include: { _count: { select: { links: true } } } }) });
 });
 
 // GET /api/v1/testbuilder/bank — question bank picker feed (FR-1.1 / §5)

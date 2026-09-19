@@ -2,8 +2,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { authApi } from '../../../lib/api';
-import { useAuthStore } from '../../../store/authStore';
+import { authApi } from '../lib'api';
+import { useAuthStore } from '../store'authStore';
 
 export default function RegisterPage() {
   const router = useRouter();

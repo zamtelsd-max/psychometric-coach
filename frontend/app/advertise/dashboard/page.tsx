@@ -2,9 +2,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { advertiserApi } from '../../../lib/adsApi';
+import { advertiserApi } from '../../lib'adsApi';
 import { useCurrency } from '../../../hooks/useCurrency';
-import CurrencySelector from '../../../components/CurrencySelector';
+import CurrencySelector from '../../components'CurrencySelector';
 
 interface Ad { id: string; title: string; headline: string; slot: string; status: string; budget: number; spent: number; impressions: number; clicks: number; createdAt: string; rejectedNote?: string; }
 interface Payment { id: string; amount: number; method: string; status: string; createdAt: string; reference?: string; }

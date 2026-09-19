@@ -1,8 +1,8 @@
 'use client';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { questionsApi, attemptsApi, bookmarksApi, profileApi } from '../../../lib/api';
-import DiagramRenderer from '../../../components/DiagramRenderer';
+import { questionsApi, attemptsApi, bookmarksApi, profileApi } from '../lib'api';
+import DiagramRenderer from '../components'DiagramRenderer';
 
 // ── Audio Player for Listening questions ───────────────────────────────────
 function AudioPlayer({ url, label }: { url: string; label?: string }) {

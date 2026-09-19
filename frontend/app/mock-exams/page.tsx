@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { mockExamsApi, questionsApi } from '../../../lib/api';
+import { mockExamsApi, questionsApi } from '../lib'api';
 
 interface ExamHistory { id: string; title: string; score: number | null; totalQ: number; completedAt: string | null; duration: number; }
 interface Category { id: string; name: string; slug: string; icon: string; }

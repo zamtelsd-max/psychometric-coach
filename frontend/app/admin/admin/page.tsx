@@ -1,8 +1,8 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '../../../store/authStore';
-import api from '../../../lib/api';
+import { useAuthStore } from '../../store'authStore';
+import api from '../../lib'api';
 
 interface Stats { totalUsers: number; totalQuestions: number; totalAttempts: number; }
 interface AdRow { id: string; title: string; slot: string; status: string; advertiser: { companyName: string; email: string }; budget: number; createdAt: string; }

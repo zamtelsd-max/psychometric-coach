@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { mockExamsApi } from '../../../../lib/api';
+import { mockExamsApi } from '../../lib'api';
 
 interface Option { id: string; text: string; isCorrect: boolean; }
 interface Question { id: string; text: string; options: Option[]; difficulty: number; category?: { name: string; icon: string }; }

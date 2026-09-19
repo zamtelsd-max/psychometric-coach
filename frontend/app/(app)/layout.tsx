@@ -100,7 +100,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <button onClick={() => { logout(); router.push('/'); }}
-            className="w-full text-xs text-gray-500 hover:text-error py-2 rounded-lg hover:bg-red-50 transition-all">Sign out</button>
+            className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-gray-700 border border-gray-200 rounded-xl py-2.5 hover:border-red-200 hover:bg-red-50 hover:text-error transition-all">
+            <span aria-hidden="true">⏻</span> Sign out
+          </button>
         </div>
       </aside>
 
@@ -117,6 +119,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Mobile bottom nav */}
+      <button onClick={() => { logout(); router.push('/'); }}
+        className="lg:hidden fixed bottom-20 right-3 z-50 flex items-center gap-1.5 bg-white border border-gray-200 shadow-md rounded-full px-4 py-2.5 text-sm font-semibold text-gray-700"
+        aria-label="Sign out">
+        <span aria-hidden="true">⏻</span> Sign out
+      </button>
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 flex items-center justify-around px-2 h-16 safe-area-pb">
         {mobileItems.map(n => (
           <Link key={n.href} href={n.href}

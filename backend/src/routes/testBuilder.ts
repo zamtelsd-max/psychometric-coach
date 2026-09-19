@@ -48,7 +48,7 @@ router.post('/:id/invites', authenticate, [body('emails').isArray({ min: 1 })], 
   const links = [];
   for (const email of emails) {
     const link = await prisma.testLink.create({ data: { token: crypto.randomBytes(12).toString('hex'), testId: test.id, candidateEmail: email } });
-    const url = `${frontend}/invite/${link.token}`;
+    const url = `${frontend}/invite?t=${link.token}`;
     const sent = await mailRelay(email, `Your assessment invite: ${test.title}`, `<h2>${test.title}</h2><p>You have been invited to complete an assessment. Start here: <a href="${url}">${url}</a></p>`);
     if (sent) await prisma.testLink.update({ where: { id: link.id }, data: { inviteSentAt: new Date() } });
     links.push({ email, token: link.token, url, emailed: sent });

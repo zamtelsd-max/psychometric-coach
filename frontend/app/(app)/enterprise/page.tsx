@@ -42,7 +42,7 @@ export default function EnterprisePage() {
     try {
       const r = await fetch(`${API}/testbuilder`, { method: 'POST', headers: hdr(), body: JSON.stringify({ title, questionIds: sel.map(s => s.id), isPublic: true }) });
       const d = await r.json(); if (d.error) throw new Error(d.error);
-      setTestId(d.test.id); setMsg(`Test created. Invite link: ${location.origin}/invite/${d.test.linkToken}`);
+      setTestId(d.test.id); setMsg(`Test created. Invite link: ${location.origin}/invite?t=${d.test.linkToken}`);
     } catch (e: any) { setErr(e.message); }
   };
 

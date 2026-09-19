@@ -1,24 +1,22 @@
 'use client';
-
-export const dynamic = 'force-static';
-export function generateStaticParams() { return [{ token: 'preview' }]; }
 import { useEffect, useState } from 'react';
 
 const BRAND = '#1B365D', GOLD = '#D4AF37';
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://www.psychometriccoach.com/api/v1';
 
 export default function InvitePage() {
+  const [token, setToken] = useState('');
   const [phase, setPhase] = useState<'load' | 'ready' | 'done' | 'error'>('load');
   const [data, setData] = useState<any>(null);
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [errMsg, setErrMsg] = useState('');
 
-  const [token, setToken] = useState('');
   useEffect(() => {
-    const t = window.location.pathname.split('/').filter(Boolean)[1] || '';
+    const t = new URLSearchParams(window.location.search).get('t') || '';
     setToken(t);
   }, []);
+
   useEffect(() => {
     if (!token) return;
     fetch(`${API}/testbuilder/public/${token}`).then(r => r.json()).then(d => {

@@ -19,7 +19,7 @@ export default function ScreeningClient() {
   const [proctorStatus, setProctorStatus] = useState('initialising camera…');
   const videoRef = useRef<HTMLVideoElement>(null);
   const timerRef = useRef<any>(null);
-  const gazeBadRef = useRef(0); const absentRef = useRef(0);
+  const gazeBadRef = useRef(0);
 
   // read id + token from URL
   useEffect(() => {
@@ -69,36 +69,71 @@ export default function ScreeningClient() {
   useEffect(() => {
     if (phase !== 'active') return;
     let stop = false; let detector: any; let raf = 0;
+    let everDetected = false;   // model has actually seen a face at least once
+    let zeroStreak = 0;         // consecutive zero-face inference results
+    let absentStart = 0;        // when the current zero-streak began
+    let inferences = 0;         // total inference attempts since start
+    let degradedLogged = false; // one silent log if detection never works
     (async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 }, audio: false });
-        if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play(); }
+        const video = videoRef.current;
+        if (!video) return;
+        video.srcObject = stream; await video.play().catch(() => {});
+        // wait for the first real video frames — inference on an empty <video> yields bogus "no face" results
+        await new Promise<void>(res => {
+          if (video.readyState >= 2 && video.videoWidth > 0) return res();
+          const check = () => { if (video.readyState >= 2 && video.videoWidth > 0) res(); else setTimeout(check, 100); };
+          check();
+        });
         // load tfjs + face-landmarks-detection from CDN (lazy, non-blocking)
         const tf: any = await import(/* webpackIgnore: true */ 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/+esm' as any);
-        await tf.setBackend('webgl'); await tf.ready();
+        try { await tf.setBackend('webgl'); } catch { await tf.setBackend('cpu'); }
+        await tf.ready();
         const fld: any = await import(/* webpackIgnore: true */ 'https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection@1.0.5/+esm' as any);
         detector = await fld.createDetector(fld.SupportedModels.MediaPipeFaceMesh, { runtime: 'tfjs', refineLandmarks: true, maxFaces: 2 });
         setProctorStatus('proctoring active');
+        // warm-up: the first inference is slow and often misses — don't count it
+        try { await detector.estimateFaces(video); } catch {}
         const loop = async () => {
           if (stop || !videoRef.current) return;
-          try {
-            const faces = await detector.estimateFaces(videoRef.current);
-            const now = Date.now();
-            if (faces.length > 1) logViolation('MULTI_FACE', `${faces.length} faces`); // SR-B2B-07 (silent log)
-            if (faces.length === 0) { absentRef.current = absentRef.current || now; if (now - absentRef.current > 4000) { logViolation('FACE_ABSENT', 'left frame >4s', true); absentRef.current = now; } } // SR-B2B-08 (candidate left the screen → alert)
-            else { absentRef.current = 0; }
-            if (faces.length === 1) { // SR-B2B-09 gaze via iris vs nose
-              const kp = faces[0].keypoints;
-              const nose = kp.find((p: any) => p.name === 'noseTip') || kp[1];
-              const li = kp.find((p: any) => p.name === 'leftEyeIris') || kp[468];
-              const ri = kp.find((p: any) => p.name === 'rightEyeIris') || kp[473];
-              if (nose && li && ri) {
-                const off = Math.abs(((li.x + ri.x) / 2) - nose.x);
-                if (off > 28) { gazeBadRef.current = gazeBadRef.current || now; if (now - gazeBadRef.current > 4000) { logViolation('GAZE_DIVERSION', off.toFixed(0), true); gazeBadRef.current = now; } } // sustained look-away → the ONE alerting event
-                else gazeBadRef.current = 0;
-              }
+          inferences++;
+          const t0 = Date.now();
+          let faces: any[] = [];
+          try { faces = (await detector.estimateFaces(videoRef.current)) || []; } catch { faces = []; }
+          const slow = (Date.now() - t0) > 3000; // inference too slow to judge absence from this cycle
+          const now = Date.now();
+          if (faces.length > 1) logViolation('MULTI_FACE', `${faces.length} faces`); // SR-B2B-07 (silent log)
+          if (faces.length >= 1) {
+            everDetected = true; zeroStreak = 0; absentStart = 0;
+          } else if (!slow) {
+            zeroStreak++; absentStart = absentStart || now;
+            // Alert only for a REAL look-away: detection has demonstrably worked
+            // before, several consecutive frames found nobody, and it lasted >6s.
+            // Guards against false "absent face" while the candidate is visible.
+            if (everDetected && zeroStreak >= 3 && now - absentStart > 6000) {
+              logViolation('FACE_ABSENT', 'not detected >6s', true); // SR-B2B-08
+              absentStart = now; zeroStreak = 0; // one alert per episode
             }
-          } catch {}
+            // Detection NEVER worked (model/CDN/GPU issue) — degrade gracefully
+            // instead of punishing the candidate with false alerts (SR-4.3).
+            if (!everDetected && inferences >= 12) {
+              if (!degradedLogged) { degradedLogged = true; logViolation('PROCTORING_DEGRADED', 'face model never detected'); }
+              setProctorStatus('face check unavailable — assessment continues');
+              return; // stop the loop; camera preview stays on
+            }
+          }
+          if (faces.length === 1) { // SR-B2B-09 gaze via iris vs nose
+            const kp = faces[0].keypoints;
+            const nose = kp.find((p: any) => p.name === 'noseTip') || kp[1];
+            const li = kp.find((p: any) => p.name === 'leftEyeIris') || kp[468];
+            const ri = kp.find((p: any) => p.name === 'rightEyeIris') || kp[473];
+            if (nose && li && ri) {
+              const off = Math.abs(((li.x + ri.x) / 2) - nose.x);
+              if (off > 28) { gazeBadRef.current = gazeBadRef.current || now; if (now - gazeBadRef.current > 4000) { logViolation('GAZE_DIVERSION', off.toFixed(0), true); gazeBadRef.current = now; } } // sustained look-away → the ONE alerting event
+              else gazeBadRef.current = 0;
+            }
+          }
           raf = requestAnimationFrame(() => setTimeout(loop, 700));
         };
         loop();

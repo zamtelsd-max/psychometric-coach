@@ -1,24 +1,33 @@
 'use client';
+
+export const dynamic = 'force-static';
+export function generateStaticParams() { return [{ token: 'preview' }]; }
 import { useEffect, useState } from 'react';
 
 const BRAND = '#1B365D', GOLD = '#D4AF37';
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://www.psychometriccoach.com/api/v1';
 
-export default function InvitePage({ params }: { params: { token: string } }) {
+export default function InvitePage() {
   const [phase, setPhase] = useState<'load' | 'ready' | 'done' | 'error'>('load');
   const [data, setData] = useState<any>(null);
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [errMsg, setErrMsg] = useState('');
 
+  const [token, setToken] = useState('');
   useEffect(() => {
-    fetch(`${API}/testbuilder/public/${params.token}`).then(r => r.json()).then(d => {
+    const t = window.location.pathname.split('/').filter(Boolean)[1] || '';
+    setToken(t);
+  }, []);
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${API}/testbuilder/public/${token}`).then(r => r.json()).then(d => {
       if (d.error) { setErrMsg(d.error); setPhase('error'); } else { setData(d); setPhase('ready'); }
     }).catch(() => { setErrMsg('Could not load this invite.'); setPhase('error'); });
-  }, [params.token]);
+  }, [token]);
 
   const submit = async () => {
-    try { await fetch(`${API}/testbuilder/public/${params.token}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers }) }); } catch {}
+    try { await fetch(`${API}/testbuilder/public/${token}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers }) }); } catch {}
     setPhase('done');
   };
 

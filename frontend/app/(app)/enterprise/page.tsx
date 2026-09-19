@@ -16,13 +16,14 @@ export default function EnterprisePage() {
   const [invites, setInvites] = useState<any[]>([]);
   const [media, setMedia] = useState<any[]>([]);
   const [cases, setCases] = useState<any[]>([]);
-  const [attachFor, setAttachFor] = useState<any>(null); // question being edited
+  const [attachFor, setAttachFor] = useState<any>(null);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
 
   useEffect(() => {
     fetch(`${API}/testbuilder/bank`, { headers: hdr() }).then(r => r.json()).then(d => setBank(d.questions || [])).catch(() => setErr('Could not load the question bank.'));
-    if (localStorage.getItem('psy_role') === 'ADMIN' || localStorage.getItem('psy_role') === 'SUPER_ADMIN') {
+    const decodeRole = (): string | null => { try { const t = localStorage.getItem('psy_token'); if (!t) return null; return (JSON.parse(atob(t.split('.')[1])) as any).role ?? null; } catch { return null; } };
+    if (['ADMIN', 'SUPER_ADMIN'].includes(decodeRole() || '')) {
       fetch(`${API}/cms/media`, { headers: hdr() }).then(r => r.json()).then(d => setMedia(d.assets || [])).catch(() => {});
       fetch(`${API}/cms/cases`, { headers: hdr() }).then(r => r.json()).then(d => setCases(d.cases || [])).catch(() => {});
     }
@@ -30,7 +31,10 @@ export default function EnterprisePage() {
 
   const addItem = (item: any) => { if (!sel.find(s => s.id === item.id)) setSel([...sel, item]); };
   const removeItem = (id: string) => setSel(sel.filter(s => s.id !== id));
-  const onDrop = (to: number) => { if (drag === null || drag === to) return; const c = [...sel]; const [m] = c.splice(drag, 1); c.splice(to, 0, m); setSel(c); setDrag(null); };
+  const onDrop = (to: number) => {
+    if (drag === null || drag === to) return;
+    const c = [...sel]; const [m] = c.splice(drag, 1); c.splice(to, 0, m); setSel(c); setDrag(null);
+  };
 
   const createTest = async () => {
     setErr(''); setMsg('');
@@ -41,6 +45,7 @@ export default function EnterprisePage() {
       setTestId(d.test.id); setMsg(`Test created. Invite link: ${location.origin}/invite/${d.test.linkToken}`);
     } catch (e: any) { setErr(e.message); }
   };
+
   const sendInvites = async () => {
     setErr(''); setMsg('');
     const list = emails.split(/[\n,;]+/).map(x => x.trim()).filter(Boolean);
@@ -51,8 +56,21 @@ export default function EnterprisePage() {
       setInvites(d.links || []); setMsg(`Invites generated for ${(d.links || []).length} candidate(s).`);
     } catch (e: any) { setErr(e.message); }
   };
-  const dlCsv = async () => { try { const r = await fetch(`${API}/growth/msr/export/csv`, { headers: hdr() }); if (!r.ok) throw new Error((await r.json()).error || 'Export failed'); const b = await r.blob(); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'msr.csv'; a.click(); } catch (e: any) { setErr(e.message); } };
-  const openPdf = async () => { try { const r = await fetch(`${API}/growth/msr/export/pdf`, { headers: hdr() }); if (!r.ok) throw new Error((await r.json()).error || 'Export failed'); const html = await r.text(); const w = window.open('', '_blank'); if (w) w.document.write(html); } catch (e: any) { setErr(e.message); } };
+
+  const dlCsv = async () => {
+    try {
+      const r = await fetch(`${API}/growth/msr/export/csv`, { headers: hdr() });
+      if (!r.ok) throw new Error((await r.json()).error || 'Export failed');
+      const b = await r.blob(); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'msr.csv'; a.click();
+    } catch (e: any) { setErr(e.message); }
+  };
+  const openPdf = async () => {
+    try {
+      const r = await fetch(`${API}/growth/msr/export/pdf`, { headers: hdr() });
+      if (!r.ok) throw new Error((await r.json()).error || 'Export failed');
+      const html = await r.text(); const w = window.open('', '_blank'); if (w) w.document.write(html);
+    } catch (e: any) { setErr(e.message); }
+  };
 
   const saveAttach = async (payload: { imageUrl?: string | null; caseStudyId?: string | null }) => {
     if (!attachFor) return;
@@ -88,15 +106,14 @@ export default function EnterprisePage() {
         <h3 style={{ fontWeight: 800, marginBottom: 10 }}>🧩 Test Builder</h3>
         <input placeholder="Test title (e.g. Senior Sales Screen)" value={title} onChange={e => setTitle(e.target.value)} style={{ ...inp, marginBottom: 10 }} />
         <input placeholder="Search the 300+ question bank…" value={query} onChange={e => setQuery(e.target.value)} style={{ ...inp, marginBottom: 10 }} />
-        <div style={{ maxHeight: 180, overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: 10, marginBottom: 12 }}>
+        <div style={{ maxHeight: 200, overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: 10, marginBottom: 12 }}>
           {filtered.slice(0, 40).map(b => (
             <div key={b.id} style={{ padding: '8px 12px', borderBottom: '1px solid #f1f5f9', fontSize: 13, display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
               <span onClick={() => addItem(b)} style={{ cursor: 'pointer', flex: 1 }}>
                 <b style={{ color: BRAND }}>{b.subSkill}</b> · D{b.difficulty} — {b.text.slice(0, 80)}…
-                {(b.imageUrl || b.caseStudyId) && <span style={{ marginLeft: 6, fontSize: 11, color: '#16a34a', fontWeight: 700 }}>{b.imageUrl ? '🖼 image' : ''}{b.imageUrl && b.caseStudyId ? ' + ' : ''}{b.caseStudyId ? '📄 case' : ''}</span>}
+                {(b.imageUrl || b.caseStudyId) ? <span style={{ marginLeft: 6, fontSize: 11, color: '#16a34a', fontWeight: 700 }}>{b.imageUrl ? '🖼 image' : ''}{b.imageUrl && b.caseStudyId ? ' + ' : ''}{b.caseStudyId ? '📄 case' : ''}</span> : null}
               </span>
-              <button onClick={e => { e.stopPropagation(); setAttachFor(b); }} title="Attach image / case study"
-                style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 8, padding: '4px 8px', cursor: 'pointer', fontSize: 12 }}>📎</button>
+              <button onClick={e => { e.stopPropagation(); setAttachFor(b); }} title="Attach image / case study" style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 8, padding: '4px 8px', cursor: 'pointer', fontSize: 12 }}>📎</button>
             </div>
           ))}
         </div>
@@ -124,14 +141,16 @@ export default function EnterprisePage() {
             ))}
           </div>
         )}
-      {attachFor && (
+      </div>
+
+      {attachFor ? (
         <div onClick={() => setAttachFor(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 70 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: 22, maxWidth: 660, width: '92%', maxHeight: '80vh', overflowY: 'auto' }}>
             <h4 style={{ fontWeight: 800, margin: '0 0 4px', color: BRAND }}>📎 Attach to question</h4>
             <p style={{ fontSize: 12.5, color: '#64748b', margin: '0 0 12px' }}>{attachFor.text.slice(0, 100)}…</p>
 
             <p style={{ fontSize: 12, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 6px' }}>CMS media images</p>
-            {media.length ? (
+            {media.length > 0 ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 10, marginBottom: 14 }}>
                 {media.map(a => (
                   <div key={a.id} onClick={() => saveAttach({ imageUrl: `${API}/cms/media/${a.id}` })} style={{ border: '1px solid #e2e8f0', borderRadius: 10, cursor: 'pointer', overflow: 'hidden', fontSize: 10 }}>
@@ -143,20 +162,19 @@ export default function EnterprisePage() {
             ) : <p style={{ fontSize: 12.5, color: '#94a3b8', margin: '0 0 14px' }}>No media assets — upload some in CMS Studio first.</p>}
 
             <p style={{ fontSize: 12, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 6px' }}>Case studies</p>
-            {cases.length ? cases.map(c => (
+            {cases.length > 0 ? cases.map(c => (
               <div key={c.id} onClick={() => saveAttach({ caseStudyId: c.id })} style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 10, marginBottom: 6, cursor: 'pointer', fontSize: 13.5 }}><b>{c.title}</b></div>
             )) : <p style={{ fontSize: 12.5, color: '#94a3b8' }}>No case studies saved yet.</p>}
 
             <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
-              {(attachFor.imageUrl || attachFor.caseStudyId) && (
-                <button onClick={() => saveAttach(attachFor.imageUrl ? { imageUrl: null } : { caseStudyId: null })}
-                  style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 700, padding: '8px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13 }}>Remove existing attachment</button>
-              )}
+              {(attachFor.imageUrl || attachFor.caseStudyId) ? (
+                <button onClick={() => saveAttach(attachFor.imageUrl ? { imageUrl: null } : { caseStudyId: null })} style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 700, padding: '8px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13 }}>Remove existing attachment</button>
+              ) : null}
               <button onClick={() => setAttachFor(null)} style={{ background: '#e2e8f0', color: '#334155', fontWeight: 700, padding: '8px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13 }}>Close</button>
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -1,10 +1,11 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '../../store/authStore';
 import AdBanner from '../../components/AdBanner';
-import { useEffect as useEf2, useState as useSt2 } from 'react';
+
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://www.psychometriccoach.com/api/v1';
 
 const navGroups = [
   { title: 'Practice Hub', items: [
@@ -26,6 +27,12 @@ const navGroups = [
   ]},
 ];
 
+const adminLinks = [
+  { href: '/admin/cms', icon: '📁', label: 'CMS Studio' },
+  { href: '/admin/pricing', icon: '💲', label: 'Price & Promo Studio' },
+  { href: '/admin/competencies', icon: '🎯', label: 'Competency Baselines' },
+];
+
 const mobileItems = [
   { href: '/dashboard', icon: '🏠', label: 'Home' },
   { href: '/assessments', icon: '🎯', label: 'Tests' },
@@ -38,11 +45,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuthStore();
   const router = useRouter();
   const path = usePathname();
+  const [promo, setPromo] = useState<any>(null);
 
-  const [promo, setPromo] = useSt2<any>(null);
   useEffect(() => {
-    if (!user) router.replace('/login');
-    else fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://www.psychometriccoach.com/api/v1'}/platform/banners/active?plan=${user.plan}`).then(r => r.json()).then(d => setPromo(d.banners?.[0] ?? null)).catch(() => {});
+    if (!user) { router.replace('/login'); return; }
+    fetch(`${API}/platform/banners/active?plan=${user.plan}`)
+      .then(r => r.json())
+      .then(d => setPromo((d.banners && d.banners[0]) || null))
+      .catch(() => {});
   }, [user, router]);
 
   if (!user) return null;
@@ -50,7 +60,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-surface flex">
-      {/* Desktop sidebar */}
       <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-gray-100 fixed h-full z-40">
         <div className="p-6 border-b border-gray-100">
           <Link href="/dashboard" className="flex items-center gap-2">
@@ -59,7 +68,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
 
-        {/* Account bar — sign out always in view, top of sidebar */}
         <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3 bg-gray-50/60">
           <div className="w-9 h-9 bg-brand rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">{user.name[0]}</div>
           <div className="flex-1 min-w-0">
@@ -72,6 +80,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <span aria-hidden="true">⏻</span> Sign out
           </button>
         </div>
+
         <nav className="flex-1 p-4 space-y-4 overflow-y-auto">
           {navGroups.map(g => (
             <div key={g.title}>
@@ -87,49 +96,42 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {isAdmin && (
             <div>
               <p className="px-4 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">Administration</p>
-              <Link href="/admin" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${path.startsWith('/admin') ? 'bg-brand/10 text-brand font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
+              <Link href="/admin" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${path.startsWith('/admin') && !path.startsWith('/admin/cms') && !path.startsWith('/admin/pricing') && !path.startsWith('/admin/competencies') ? 'bg-brand/10 text-brand font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
                 <span className="text-lg">⚙️</span>Admin CMS
               </Link>
-              <Link href="/admin/cms" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${path.startsWith('/admin/cms') ? 'bg-brand/10 text-brand font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
-                <span className="text-lg">📁</span>CMS Studio
-              </Link>
-              <Link href="/admin/pricing" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${path.startsWith('/admin/pricing') ? 'bg-brand/10 text-brand font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
-                <span className="text-lg">💲</span>Price &amp; Promo Studio
-              </Link>
-              <Link href="/admin/competencies" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${path.startsWith('/admin/competencies') ? 'bg-brand/10 text-brand font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
-                <span className="text-lg">🎯</span>Competency Baselines
-              </Link>
+              {adminLinks.map(n => (
+                <Link key={n.href} href={n.href}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${path.startsWith(n.href) ? 'bg-brand/10 text-brand font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
+                  <span className="text-lg">{n.icon}</span>{n.label}
+                </Link>
+              ))}
             </div>
           )}
         </nav>
+
         <div className="p-3 border-t border-gray-100">
-          <AdBanner slot="SIDEBAR" className="mb-2" />
-        </div>
-          <button onClick={() => { logout(); router.push('/'); }}
-            className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-gray-700 border border-gray-200 rounded-xl py-2.5 hover:border-red-200 hover:bg-red-50 hover:text-error transition-all">
-            <span aria-hidden="true">⏻</span> Sign out
-          </button>
+          <AdBanner slot="SIDEBAR" />
         </div>
       </aside>
 
-      {/* Main content */}
       <main className="flex-1 lg:ml-64 pb-20 lg:pb-0 min-h-screen">
         {promo && (
           <div className="flex items-center justify-center gap-3 px-4 py-2 text-sm font-semibold" style={{ background: 'linear-gradient(90deg,#1B365D,#0A528A)', color: '#fff' }}>
-            <span style={{ color: '#D4AF37' }}>📣</span>{promo.message}
-            {promo.ctaText && <a href={promo.ctaUrl || '#'} className="underline font-bold" style={{ color: '#D4AF37' }}>{promo.ctaText}</a>}
+            <span style={{ color: '#D4AF37' }}>📣</span>
+            <span>{promo.message}</span>
+            {promo.ctaText ? <a href={promo.ctaUrl || '#'} className="underline font-bold" style={{ color: '#D4AF37' }}>{promo.ctaText}</a> : null}
           </div>
         )}
         <div className="lg:hidden px-3 pt-3"><AdBanner slot="FOOTER_BANNER" /></div>
         {children}
       </main>
 
-      {/* Mobile bottom nav */}
       <button onClick={() => { logout(); router.push('/'); }}
         className="lg:hidden fixed bottom-20 right-3 z-50 flex items-center gap-1.5 bg-white border border-gray-200 shadow-md rounded-full px-4 py-2.5 text-sm font-semibold text-gray-700"
         aria-label="Sign out">
         <span aria-hidden="true">⏻</span> Sign out
       </button>
+
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 flex items-center justify-around px-2 h-16 safe-area-pb">
         {mobileItems.map(n => (
           <Link key={n.href} href={n.href}

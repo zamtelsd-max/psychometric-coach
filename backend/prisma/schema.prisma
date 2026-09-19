@@ -737,7 +737,6 @@ model CompetencyRole {
   baselines    Json // { "Numerical Reasoning": 70, ... } — min % per skill
   createdBy    String
   creator      User    @relation(fields: [createdBy], references: [id])
-  gapAnalyses  GapAnalysisRecord[]
   createdAt    DateTime @default(now())
 
   @@map("competency_roles")

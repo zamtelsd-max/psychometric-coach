@@ -35,7 +35,15 @@ async function emailMsr(ownerEmail: string, enterpriseName: string, msr: MsrPayl
   <ul><li>Completions: ${msr.completions}</li><li>Success rate: ${msr.candidateSuccessRate}%</li>
   <li>Gold badges: ${msr.badges.gold} · Platinum: ${msr.badges.platinum}</li></ul>
   <p>Full export is available on your Enterprise Hub dashboard.</p>`;
-  try { const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secret}` }, body: JSON.stringify({ to: ownerEmail, subject: `Your MSR is ready — ${enterpriseName} (${msr.month})`, html })); return r.ok; } catch { return false; }
+  const subject = 'Your MSR is ready - ' + enterpriseName + ' (' + msr.month + ')';
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + secret },
+      body: JSON.stringify({ to: ownerEmail, subject, html }),
+    });
+    return r.ok;
+  } catch { return false; }
 }
 
 export async function compileAndStoreAllMsrs(): Promise<{ compiled: number; emailed: number }> {

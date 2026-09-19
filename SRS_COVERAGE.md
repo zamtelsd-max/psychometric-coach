@@ -23,7 +23,7 @@
 | FR-6.x | CMS Studio | ⬜ Not started | — |
 | FR-7.1–7.4 | Certification loop | ✅ Done | certification engine + my-certifications |
 | FR-8.1 | Team performance metrics | ✅ Done | /growth/msr |
-| FR-8.2 | Automated MSR on the 1st | ⚠️ Partial | on-demand compile; cron pending |
+| FR-8.2 | Automated MSR on the 1st | ✅ Done | services/msr.ts scheduler (07:00 Africa/Lusaka, stored + emailed) |
 | FR-8.3 | MSR PDF/CSV export | ✅ Done | /growth/msr/export/csv + /pdf + Hub buttons |
 | FR-9.1 | Base price management | ⚠️ Partial | Dodo product ids env-driven; price panel pending |
 | FR-9.2 | Coupon configuration matrix | ✅ Done | /coupons CRUD + validate |

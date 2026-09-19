@@ -2,9 +2,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { advertiserApi } from '../../../lib/adsApi';
-import { useCurrency } from '../../../hooks/useCurrency';
-import CurrencySelector from '../../../components/CurrencySelector';
+import { advertiserApi } from '../../lib/adsApi';
+import { useCurrency } from '../../hooks/useCurrency';
+import CurrencySelector from '../../components/CurrencySelector';
 
 const SLOT_CPM: Record<string, number> = {
   BANNER: 2.50, SIDEBAR: 1.75, IN_FEED: 2.00, FOOTER_BANNER: 1.25,

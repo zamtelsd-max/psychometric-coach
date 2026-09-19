@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { advertiserApi } from '../../../lib/adsApi';
+import { advertiserApi } from '../../lib/adsApi';
 
 export default function AdvertiserLogin() {
   const router = useRouter();

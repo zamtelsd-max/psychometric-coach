@@ -37,13 +37,13 @@ function getLoginError(raw: string | undefined): { title: string; hint: string; 
     return {
       title: 'Account suspended',
       hint: 'Your account has been suspended. Please contact support for assistance.',
-      hintLink: { label: 'Contact support', href: 'mailto:support@psycometriccoach.online' },
+      hintLink: { label: 'Contact support', href: 'mailto:support@psychometriccoach.com' },
     };
   }
   return {
     title: 'Sign in failed',
     hint: raw || 'Something went wrong. Please try again or contact support.',
-    hintLink: { label: 'Contact support', href: 'mailto:support@psycometriccoach.online' },
+    hintLink: { label: 'Contact support', href: 'mailto:support@psychometriccoach.com' },
   };
 }
 
@@ -187,7 +187,7 @@ export default function LoginPage() {
             </p>
             <p className="text-xs text-gray-400">
               Need help?{' '}
-              <a href="mailto:support@psycometriccoach.online" className="text-brand hover:underline">support@psycometriccoach.online</a>
+              <a href="mailto:support@psychometriccoach.com" className="text-brand hover:underline">support@psychometriccoach.com</a>
             </p>
           </div>
         </div>

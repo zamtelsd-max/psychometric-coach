@@ -262,7 +262,7 @@ const features = [
 const plans = [
   { name: 'Free', price: '$0', period: 'forever', color: 'border-gray-200', features: ['20 questions/day', '5 categories', 'Basic progress tracking', 'Mobile PWA'], cta: 'Start Free', href: '/register' },
   { name: 'Premium', price: '$9.99', period: '/month', color: 'border-brand ring-2 ring-brand', features: ['Unlimited practice', 'All 15 categories', 'Full mock exams', 'AI explanations', 'Offline mode', 'Advanced analytics'], cta: 'Start Premium', href: '/register', badge: 'Most Popular' },
-  { name: 'Enterprise', price: 'Custom', period: '', color: 'border-gray-200', features: ['Bulk seat licensing', 'Cohort analytics', 'Custom content', 'Dedicated support', 'SLA guarantee'], cta: 'Contact Us', href: 'mailto:support@psycometriccoach.online' },
+  { name: 'Enterprise', price: 'Custom', period: '', color: 'border-gray-200', features: ['Bulk seat licensing', 'Cohort analytics', 'Custom content', 'Dedicated support', 'SLA guarantee'], cta: 'Contact Us', href: 'mailto:support@psychometriccoach.com' },
 ];
 
 // ── Live Chat Widget ───────────────────────────────────────────────────────
@@ -304,7 +304,7 @@ function LiveChat() {
       } else if (lower.includes('android') || lower.includes('app') || lower.includes('download') || lower.includes('apk')) {
         reply = "You can download our Android app at: https://www.psychometriccoach.com/download/ — or install it as a PWA from your browser on any device!";
       } else if (lower.includes('password') || lower.includes('login') || lower.includes('account') || lower.includes('sign')) {
-        reply = "For account issues, please email us directly at support@psycometriccoach.online and we'll sort it out within a few hours.";
+        reply = "For account issues, please email us directly at support@psychometriccoach.com and we'll sort it out within a few hours.";
       } else if (lower.includes('feedback') || lower.includes('suggest') || lower.includes('improve')) {
         reply = "Thank you for your feedback! 🙏 We really appreciate it — your suggestions help us improve. Our team has been notified and will review it.";
       }
@@ -583,7 +583,7 @@ export default function LandingPage() {
               <div className="text-3xl mb-3">📧</div>
               <h3 className="font-bold text-gray-900 mb-1">Email Support</h3>
               <p className="text-sm text-gray-500 mb-3">We reply within 24 hours</p>
-              <a href="mailto:support@psycometriccoach.online" className="text-brand font-semibold text-sm hover:underline">support@psycometriccoach.online</a>
+              <a href="mailto:support@psychometriccoach.com" className="text-brand font-semibold text-sm hover:underline">support@psychometriccoach.com</a>
             </div>
             <div className="bg-surface rounded-2xl p-6 border border-gray-100 text-center">
               <div className="text-3xl mb-3">💬</div>
@@ -632,7 +632,7 @@ export default function LandingPage() {
               <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
               <Link href="/terms" className="hover:text-white">Terms of Service</Link>
               <a href="#contact" className="hover:text-white">Contact</a>
-              <a href="mailto:support@psycometriccoach.online" className="hover:text-white">support@psycometriccoach.online</a>
+              <a href="mailto:support@psychometriccoach.com" className="hover:text-white">support@psychometriccoach.com</a>
             </div>
           </div>
           <div className="border-t border-gray-800 pt-6 text-center text-xs text-gray-600">

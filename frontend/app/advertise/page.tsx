@@ -78,7 +78,7 @@ export default function AdvertisePage() {
           <Link href="/advertise/register" className="bg-[#0A528A] text-white font-bold px-8 py-4 rounded-2xl text-base hover:bg-blue-900 transition-all shadow-lg shadow-blue-900/20">
             Start Advertising — Free to Sign Up
           </Link>
-          <a href="mailto:support@psycometriccoach.online" className="border border-gray-200 text-gray-700 font-semibold px-8 py-4 rounded-2xl text-base hover:border-[#0A528A] hover:text-[#0A528A] transition-all">
+          <a href="mailto:support@psychometriccoach.com" className="border border-gray-200 text-gray-700 font-semibold px-8 py-4 rounded-2xl text-base hover:border-[#0A528A] hover:text-[#0A528A] transition-all">
             Talk to Sales →
           </a>
         </div>
@@ -187,7 +187,7 @@ export default function AdvertisePage() {
                 ))}
               </ul>
               <Link
-                href={p.name === 'Enterprise' ? 'mailto:support@psycometriccoach.online' : '/advertise/register'}
+                href={p.name === 'Enterprise' ? 'mailto:support@psychometriccoach.com' : '/advertise/register'}
                 className="block w-full text-center font-bold py-3 rounded-xl transition-all text-sm"
                 style={{ backgroundColor: p.popular ? '#0A528A' : undefined, color: p.popular ? 'white' : p.color, border: p.popular ? 'none' : `2px solid ${p.color}` }}>
                 {p.cta}
@@ -248,7 +248,7 @@ export default function AdvertisePage() {
         <Link href="/advertise/register" className="inline-block bg-[#0A528A] text-white font-bold px-10 py-4 rounded-2xl text-base hover:bg-blue-900 transition-all shadow-lg shadow-blue-900/20">
           Create Advertiser Account — Free
         </Link>
-        <p className="text-xs text-gray-400 mt-4">Questions? Email <a href="mailto:support@psycometriccoach.online" className="text-[#0A528A]">support@psycometriccoach.online</a></p>
+        <p className="text-xs text-gray-400 mt-4">Questions? Email <a href="mailto:support@psychometriccoach.com" className="text-[#0A528A]">support@psychometriccoach.com</a></p>
       </section>
 
       {/* Footer */}

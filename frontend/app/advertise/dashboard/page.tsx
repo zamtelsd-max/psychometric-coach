@@ -228,7 +228,7 @@ export default function AdvertiserDashboard() {
               <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-4 text-xs text-[#0A528A]">
                 <strong>All billing is in USD.</strong> If paying via local bank transfer or mobile money, convert using today's exchange rate. After paying, submit your payment record below with the reference number.
               </div>
-              <p className="text-xs text-gray-500 mb-4">Send proof of payment to <a href="mailto:support@psycometriccoach.online" className="text-[#0A528A]">support@psycometriccoach.online</a>. Balance activated within 24 hours.</p>
+              <p className="text-xs text-gray-500 mb-4">Send proof of payment to <a href="mailto:support@psychometriccoach.com" className="text-[#0A528A]">support@psychometriccoach.com</a>. Balance activated within 24 hours.</p>
               <div className="grid sm:grid-cols-2 gap-4 mb-4">
                 {PAYMENT_BANKS.map(b => (
                   <div key={b.name} className="bg-blue-50 rounded-xl p-3">

@@ -1,5 +1,4 @@
 'use client';
-// v9
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { questionsApi, attemptsApi, bookmarksApi, profileApi } from '../../../lib/api';

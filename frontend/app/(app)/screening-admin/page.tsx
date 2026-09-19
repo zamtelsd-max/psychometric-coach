@@ -1,5 +1,4 @@
 'use client';
-// v9
 import { useEffect, useState } from 'react';
 import { screeningApi, enterpriseApi } from '../../../lib/api';
 

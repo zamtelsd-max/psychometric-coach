@@ -1,5 +1,4 @@
 'use client';
-// v9
 import { useEffect, useRef, useState } from 'react';
 
 const BRAND = '#1B365D', GOLD = '#D4AF37';

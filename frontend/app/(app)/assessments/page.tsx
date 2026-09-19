@@ -1,5 +1,4 @@
 'use client';
-// v9
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { questionsApi } from '../../../lib/api';

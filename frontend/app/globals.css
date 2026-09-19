@@ -28,7 +28,3 @@ a, button { transition: all 0.15s ease; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #f1f1f1; }
 ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
-
-/* v2 */
-
-html{-webkit-text-size-adjust:100%}body{text-rendering:optimizeLegibility}

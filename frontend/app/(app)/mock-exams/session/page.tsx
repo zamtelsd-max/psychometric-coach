@@ -1,4 +1,4 @@
-'use client';
+// v9 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { mockExamsApi } from '../../../../lib/api';

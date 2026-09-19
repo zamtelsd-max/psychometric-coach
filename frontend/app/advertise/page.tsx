@@ -1,4 +1,4 @@
-'use client';
+// v9 'use client';
 import Link from 'next/link';
 import { useCurrency } from '../../hooks/useCurrency';
 import CurrencySelector from '../../components/CurrencySelector';

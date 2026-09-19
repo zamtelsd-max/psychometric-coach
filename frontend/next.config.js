@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: { inlineCss: true },
   output: 'export',
   trailingSlash: true,
   images: { unoptimized: true },

@@ -1,4 +1,4 @@
-import ScreeningClient from './ScreeningClient';
+// v9 import ScreeningClient from './ScreeningClient';
 
 // Static-export placeholder; real ids resolve client-side from the URL.
 export function generateStaticParams() { return [{ assessmentId: 'entry' }]; }

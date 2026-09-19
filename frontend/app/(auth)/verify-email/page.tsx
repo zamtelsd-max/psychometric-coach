@@ -1,4 +1,4 @@
-'use client';
+// v9 'use client';
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';

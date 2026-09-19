@@ -1,4 +1,4 @@
-'use client';
+// v9 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { enterpriseApi } from '../../../lib/api';

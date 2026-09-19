@@ -1,4 +1,4 @@
-'use client';
+// v9 'use client';
 import { useEffect, useState } from 'react';
 import { bookmarksApi } from '../../../lib/api';
 import Link from 'next/link';

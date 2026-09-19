@@ -22,6 +22,7 @@ import assessmentsRoutes from './routes/assessments';
 import dodoWebhookRoutes from './routes/dodoWebhooks';
 import couponsRoutes from './routes/coupons';
 import growthRoutes from './routes/growth';
+import cmsRoutes from './routes/cms';
 import { startMsrScheduler } from './services/msr';
 import logger from './lib/logger';
 
@@ -81,6 +82,7 @@ const adServedLimiter = rateLimit({
 app.use(limiter);
 
 // Body parsing
+app.use('/api/v1/cms', express.json({ limit: '10mb', verify: (req: any, _res: any, buf: any) => { (req as any).rawBody = buf; } }));
 app.use(express.json({ limit: '2mb', verify: (req: any, _res, buf) => { req.rawBody = buf; } }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -110,6 +112,7 @@ app.use('/api/v1/assessments', assessmentsRoutes);
 app.use('/api/v1/webhooks',   dodoWebhookRoutes);
 app.use('/api/v1/coupons',    couponsRoutes);
 app.use('/api/v1/growth',     growthRoutes);
+app.use('/api/v1/cms',        cmsRoutes);
 app.use('/api/v1/questions',  questionsRoutes);
 app.use('/api/v1/attempts',   attemptsRoutes);
 app.use('/api/v1/mock-exams', mockExamsRoutes);

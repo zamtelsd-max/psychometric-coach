@@ -72,6 +72,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <Link href="/admin" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${path.startsWith('/admin') ? 'bg-brand/10 text-brand font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
                 <span className="text-lg">⚙️</span>Admin CMS
               </Link>
+              <Link href="/admin/cms" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${path.startsWith('/admin/cms') ? 'bg-brand/10 text-brand font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
+                <span className="text-lg">📁</span>CMS Studio
+              </Link>
             </div>
           )}
         </nav>

@@ -20,7 +20,9 @@
 | FR-4.3 | XP engine | ✅ Done | xpPoints awards |
 | FR-4.4 | Row-level data isolation | ✅ Done | authenticate + userId-scoped queries |
 | FR-5.1–5.4 | AI learning recommendations | ⚠️ Partial | gap-rationale feed; full library pending |
-| FR-6.x | CMS Studio | ⬜ Not started | — |
+| FR-6.1 | Multi-format asset dropzone (PNG/JPEG/SVG) | ✅ Done | /admin/cms dropzone + POST /cms/media (DB-backed) |
+| FR-6.2 | Rich text controls for case studies + tables | ✅ Done | CMS Studio editor (headings/lists/tables/images) + sanitizer |
+| FR-6.3 | Fluid image optimization | ✅ Done | dimension parsing at upload, WxH headers, fluid <img> attrs |
 | FR-7.1–7.4 | Certification loop | ✅ Done | certification engine + my-certifications |
 | FR-8.1 | Team performance metrics | ✅ Done | /growth/msr |
 | FR-8.2 | Automated MSR on the 1st | ✅ Done | services/msr.ts scheduler (07:00 Africa/Lusaka, stored + emailed) |

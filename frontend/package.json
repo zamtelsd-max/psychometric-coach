@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "deploy": "NEXT_PUBLIC_API_URL=https://psychometric-backend-production.up.railway.app/api/v1 next build && npx gh-pages -d out -b gh-pages"
+    "start": "next start"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.4",

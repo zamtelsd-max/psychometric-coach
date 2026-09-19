@@ -39,7 +39,7 @@ export async function buildFeed(userId: string): Promise<{ items: FeedItem[]; ga
   const items: FeedItem[] = [];
   for (const m of modules) {
     const words = m.contentHtml.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
-    const { estMinutes, label } = { estMinutes: m.estMinutes, label: computeDuration(m.contentHtml, m.format).label || words && '' };
+    const { estMinutes, label } = { estMinutes: m.estMinutes, label: computeDuration(m.contentHtml, m.format).label};
     const matchedTag = m.tags.find(t => gaps.includes(t));
     const rationale = matchedTag ? `Fixes your identified gap in: ${matchedTag}` : `Builds your foundation in: ${m.tags[0] ?? 'core skills'}`;
     items.push({ id: m.id, title: m.title, format: m.format, durationLabel: label, estMinutes, tags: m.tags, rationale, excerpt: m.contentHtml.replace(/<[^>]+>/g, ' ').slice(0, 120) + '…', completed: doneSet.has(m.id) });

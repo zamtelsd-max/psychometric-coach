@@ -55,8 +55,8 @@ export async function compileAndStoreAllMsrs(): Promise<{ compiled: number; emai
       const msr = await compileMsr(e.id, e.name);
       await prisma.monthlyReport.upsert({
         where: { enterpriseId_month: { enterpriseId: e.id, month } },
-        update: { data: msr },
-        create: { enterpriseId: e.id, month, data: msr },
+        update: { data: msr as any },
+        create: { enterpriseId: e.id, month, data: msr as any },
       });
       compiled++;
       const sent = await emailMsr(e.ownerEmail, e.name, msr);

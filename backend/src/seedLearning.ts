@@ -1,0 +1,33 @@
+// SRS FR-5 starter library — 12 micro-learning modules across the platform's
+// skills, each with computed duration + gap tags. Rerun-safe (skips existing).
+import prisma from './lib/prisma';
+import { computeDuration } from './services/learning';
+
+const M = (title: string, format: string, tags: string[], body: string) => ({ title, format, tags, contentHtml: body });
+
+const LIB = [
+  M('Ratios & Proportions Fast Track', 'READ', ['Numerical Reasoning', 'Quantitative Aptitude'], '<p>Ratios compare quantities. To solve <b>A:B = 3:5, A+B = 40</b>: total parts = 8, so A = 15, B = 25. Always convert to <em>parts</em> first.</p><h3>Technique</h3><ul><li>Write the ratio, add parts, find one-part value.</li><li>Scale up before computing each unknown.</li><li>Sanity-check: bigger ratio share = bigger value.</li></ul><div data-exercise><b>Practice:</b> Sales split 2:3 between two regions; total 2,500 units. How many in the larger region? (1,500)</div>'),
+  M('Percentage Change Without Panic', 'READ', ['Numerical Reasoning', 'Quantitative Aptitude'], '<p>Percentage change = (new − old) ÷ old × 100. A 20% rise then 20% fall is <b>not</b> flat: 100 → 120 → 96 (−4%).</p><h3>Exam traps</h3><ul><li>Successive changes multiply, never add.</li><li>"X% of Y" vs "X% more than Y" differ.</li></ul><div data-exercise><b>Practice:</b> Price rises 25%, then falls 20%. Net change? (0%)</div>'),
+  M('Speed Reading Comprehension', 'READ', ['Verbal Reasoning', 'Reading Comprehension'], '<p>Answer from the <b>passage only</b> — outside knowledge is a trap. Read the question first, then scan for keywords.</p><h3>Method</h3><ul><li>Match question stems to passage lines.</li><li>Eliminate options that overstate ("always", "never").</li><li>True / Cannot-say / False: literal truth decides.</li></ul><div data-exercise><b>Practice:</b> In a 400-word passage, find the sentence that limits a claim.</div>'),
+  M('Analogy & Vocabulary Patterns', 'READ', ['Verbal Reasoning'], '<p>Analogy = relationship transfer. "Paddle : Canoe" → tool to vehicle. Build the sentence bridge, then test each option in the same sentence.</p><ul><li>Watch order (part:whole, cause:effect).</li><li>Keep tense and register consistent.</li></ul><div data-exercise><b>Practice:</b> Helm : Ship :: ___ : Business. (Executive)</div>'),
+  M('Matrices & Sequence Logic', 'READ', ['Abstract Reasoning', 'Logical Reasoning'], '<p>Each matrix row/column applies one rule. Scan for: rotation, size change, shading alternation, element count.</p><h3>Order of checks</h3><ul><li>Count elements first (cheapest).</li><li>Then shape/rotation, then shading.</li></ul><div data-exercise><b>Practice:</b> Predict the next figure where arrows rotate 90° clockwise each step.</div>'),
+  M('Syllogisms & Deduction', 'READ', ['Deductive Reasoning', 'Logical Reasoning'], '<p>Convert statements to set language: "All A are B", "Some A are B". Draw Venn circles; conclusions must hold for <em>every</em> valid diagram.</p><ul><li>"Some" never proves "all".</li><li>Negative premises block positive conclusions.</li></ul><div data-exercise><b>Practice:</b> All engineers are graduates. Some graduates are managers. Does "some engineers are managers" follow? (No)</div>'),
+  M('Spatial Folding & Rotation', 'READ', ['Spatial Reasoning'], '<p>For net-folding items, pick a <b>landmark face</b> and track its neighbours clockwise. Opposite faces never share an edge.</p><ul><li>Eliminate cubes violating adjacency.</li><li>Rotate mentally in 90° steps only.</li></ul><div data-exercise><b>Practice:</b> A cross-shaped net folds to a cube — which two faces are opposite?</div>'),
+  M('SJT: Prioritise Like a Manager', 'READ', ['Situational Judgement', 'Personality & Behavioural'], '<p>SJT scoring rewards <b>effectiveness</b>, not perfection. Best responses usually: gather facts quickly, involve stakeholders, act proportionately.</p><h3>Ranking heuristics</h3><ul><li>Customer-impacting issues first.</li><li>Documented escalation beats silent heroics.</li><li>Avoid options that bypass people or policy.</li></ul><div data-exercise><b>Practice:</b> Rank responses to a colleague missing a deadline affecting your deliverable.</div>'),
+  M('Negotiation Value Claims', 'COURSE', ['Negotiation', 'Sales Management'], '<p>A value claim pairs a metric with a business outcome: "cut stockouts 18%, protecting margin". Anchor on value before price.</p><h3>Framework</h3><ul><li>Quantify the cost of the status quo.</li><li>Trade concessions, never gift them.</li><li>Summarise agreements in writing.</li></ul><div data-exercise><b>Practice:</b> Draft a 3-sentence value claim for a logistics client facing delays.</div>'),
+  M('Funnel Diagnostics in Practice', 'COURSE', ['Funnel Optimization', 'Modern Marketing Strategy'], '<p>When traffic rises but conversion drops, segment the funnel: session quality, page speed, checkout steps, payment failures.</p><h3>Sequence</h3><ul><li>Compare step-by-step drop-offs week over week.</li><li>Check mobile vs desktop split.</li><li>Fix the largest single-step leak first.</li></ul><div data-exercise><b>Practice:</b> Diagnose a 2.5% checkout drop after a campaign spike.</div>'),
+  M('Ransomware First Response', 'COURSE', ['Cyber Defense', 'ICT Infrastructure & Technology Management'], '<p>First actions: <b>isolate</b> affected segments, preserve evidence, activate the IR plan, notify per policy. Recovery uses verified offline backups.</p><h3>Do / Do not</h3><ul><li>Do contain before you clean.</li><li>Do not pay without legal + executive review.</li><li>Do log every decision with timestamps.</li></ul><div data-exercise><b>Practice:</b> Order the first five response actions for an infected file server.</div>'),
+  M('Budget Cuts by Zero-Based Review', 'READ', ['Operational Budget Allocation', 'Corporate Business Management'], '<p>Zero-based review rebuilds spend from zero: every line justifies itself against current strategy, protecting revenue-critical capability.</p><ul><li>Protect growth and compliance lines first.</li><li>Cut duplicated tooling and unused subscriptions.</li></ul><div data-exercise><b>Practice:</b> Identify three safe cuts in a sample 12-line opex budget.</div>'),
+];
+
+async function main() {
+  let created = 0;
+  for (const m of LIB) {
+    const exists = await prisma.learningModule.findFirst({ where: { title: m.title } });
+    if (exists) continue;
+    await prisma.learningModule.create({ data: { ...m, estMinutes: computeDuration(m.contentHtml, m.format).estMinutes } });
+    created++;
+  }
+  console.log(`learning library seeded: ${created} new, ${LIB.length} total`);
+}
+main().finally(() => prisma.$disconnect());

@@ -23,6 +23,7 @@ import dodoWebhookRoutes from './routes/dodoWebhooks';
 import couponsRoutes from './routes/coupons';
 import growthRoutes from './routes/growth';
 import cmsRoutes from './routes/cms';
+import learningRoutes from './routes/learning';
 import { startMsrScheduler } from './services/msr';
 import logger from './lib/logger';
 
@@ -113,6 +114,7 @@ app.use('/api/v1/webhooks',   dodoWebhookRoutes);
 app.use('/api/v1/coupons',    couponsRoutes);
 app.use('/api/v1/growth',     growthRoutes);
 app.use('/api/v1/cms',        cmsRoutes);
+app.use('/api/v1/learning',   learningRoutes);
 app.use('/api/v1/questions',  questionsRoutes);
 app.use('/api/v1/attempts',   attemptsRoutes);
 app.use('/api/v1/mock-exams', mockExamsRoutes);

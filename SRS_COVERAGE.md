@@ -19,7 +19,11 @@
 | FR-4.2 | Login streak counter | ✅ Done | /growth/summary (48h reset) |
 | FR-4.3 | XP engine | ✅ Done | xpPoints awards |
 | FR-4.4 | Row-level data isolation | ✅ Done | authenticate + userId-scoped queries |
-| FR-5.1–5.4 | AI learning recommendations | ⚠️ Partial | gap-rationale feed; full library pending |
+| FR-5.1 | Dynamic skill mapping (gaps → modules) | ✅ Done | services/learning.ts extractGaps + /learning/feed |
+| FR-5.2 | AI-calculated reading durations | ✅ Done | computeDuration (word count + exercise allowance) |
+| FR-5.3 | Short-first frictionless stream | ✅ Done | feed sorted by estMinutes within matches |
+| FR-5.4 | Contextual rationale messaging | ✅ Done | "Fixes your identified gap in: X" per card |
+| FR-7.1 | Exam unlock after path completion | ✅ Done | /learning/module/:id/complete unlock rule |
 | FR-6.1 | Multi-format asset dropzone (PNG/JPEG/SVG) | ✅ Done | /admin/cms dropzone + POST /cms/media (DB-backed) |
 | FR-6.2 | Rich text controls for case studies + tables | ✅ Done | CMS Studio editor (headings/lists/tables/images) + sanitizer |
 | FR-6.3 | Fluid image optimization | ✅ Done | dimension parsing at upload, WxH headers, fluid <img> attrs |

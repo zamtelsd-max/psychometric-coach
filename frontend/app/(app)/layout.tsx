@@ -12,6 +12,7 @@ const navGroups = [
     { href: '/practice', icon: '✏️', label: 'Practice' },
     { href: '/mock-exams', icon: '📋', label: 'Mock Exams' },
     { href: '/library', icon: '📚', label: 'Library' },
+    { href: '/learning', icon: '⚡', label: 'AI Growth Center' },
   ]},
   { title: 'Career Tools', items: [
     { href: '/interview', icon: '🎤', label: 'Interview Panel' },

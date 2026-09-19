@@ -32,6 +32,7 @@ model User {
   attempts       Attempt[]
   certifications EmployeeCertification[]
   customTests    CustomTest[]
+  completions    ModuleCompletion[]
   bookmarks      Bookmark[]
   notifications  Notification[]
   studyPlans     StudyPlan?
@@ -693,5 +694,35 @@ model CaseStudy {
   updatedAt DateTime @updatedAt
 
   @@map("case_studies")
+  @@schema("pc")
+}
+
+// ── SRS FR-5: AI Training Bank & Micro-Learning Recommendation Core ──
+model LearningModule {
+  id         String   @id @default(cuid())
+  title      String
+  format     String   @default("READ") // READ | COURSE | DRILL
+  contentHtml String
+  estMinutes Int      @default(5) // AI-calculated reading duration (FR-5.2)
+  tags       String[] // gap skills this module fixes (FR-5.1/5.4)
+  isActive   Boolean  @default(true)
+  completions ModuleCompletion[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("learning_modules")
+  @@schema("pc")
+}
+
+model ModuleCompletion {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  moduleId  String
+  module    LearningModule @relation(fields: [moduleId], references: [id])
+  completedAt DateTime     @default(now())
+
+  @@unique([userId, moduleId])
+  @@map("module_completions")
   @@schema("pc")
 }

@@ -28,7 +28,9 @@ model User {
   emailVerified    Boolean   @default(false)
   verifyToken      String?
   verifyTokenExpiry DateTime?
+  xpPoints       Int            @default(0)
   attempts       Attempt[]
+  certifications EmployeeCertification[]
   bookmarks      Bookmark[]
   notifications  Notification[]
   studyPlans     StudyPlan?
@@ -540,3 +542,72 @@ model ViolationLog {
   @@map("violation_logs")
   @@schema("pc")
 }
+
+// ════════ SRS ADDENDUM (2026-09): enterprise tier, certifications, localization ════════
+
+enum BadgeTier {
+  NONE
+  GOLD
+  PLATINUM
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FLAT_FIXED
+}
+
+model Enterprise {
+  id                  String    @id @default(cuid())
+  name                String
+  ownerEmail          String
+  dodoSubscriptionId  String?   @unique
+  trialStartedAt      DateTime?
+  isTrialActive       Boolean   @default(false)
+  isPaidSubscriber    Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@map("enterprises")
+  @@schema("pc")
+}
+
+model Coupon {
+  couponCode            String       @id
+  discountType          DiscountType
+  discountValue         Decimal      @db.Decimal(10, 2)
+  dodoPriceOverrideId   String?
+  expiresAt             DateTime?
+  usageLimit            Int?
+  usedCount             Int          @default(0)
+  createdAt             DateTime     @default(now())
+
+  @@map("coupons")
+  @@schema("pc")
+}
+
+model EmployeeCertification {
+  certificationId String   @id @default(uuid())
+  employeeId      String
+  employee        User     @relation(fields: [employeeId], references: [id])
+  courseId        String
+  examScore       Decimal  @db.Decimal(5, 2)
+  badgeTier       BadgeTier @default(NONE)
+  certifiedAt     DateTime @default(now())
+
+  @@unique([employeeId, courseId], name: "unique_employee_course_cert")
+  @@map("employee_certifications")
+  @@schema("pc")
+}
+
+model LocalizationAsset {
+  id         String @id @default(cuid())
+  region     String // e.g. "ZM", "US", "UK", "GLOBAL"
+  token      String // e.g. "LocalName1", "LocalCompany1", "LocalCurrency"
+  value      String // e.g. "Chansa", "Mwansa Ltd", "K"
+  createdAt  DateTime @default(now())
+
+  @@unique([region, token])
+  @@map("localization_assets")
+  @@schema("pc")
+}
+

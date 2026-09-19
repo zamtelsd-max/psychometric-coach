@@ -18,6 +18,10 @@ import supportRoutes from './routes/support';
 import enterpriseRoutes from './routes/enterprise';
 import screeningRoutes from './routes/screening';
 import adsRoutes from './routes/ads';
+import assessmentsRoutes from './routes/assessments';
+import dodoWebhookRoutes from './routes/dodoWebhooks';
+import couponsRoutes from './routes/coupons';
+import growthRoutes from './routes/growth';
 import logger from './lib/logger';
 
 const app = express();
@@ -101,6 +105,10 @@ app.get('/health', (_req, res) => {
 
 // ── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/v1/auth',       authLimiter, authRoutes);
+app.use('/api/v1/assessments', assessmentsRoutes);
+app.use('/api/v1/webhooks',   dodoWebhookRoutes);
+app.use('/api/v1/coupons',    couponsRoutes);
+app.use('/api/v1/growth',     growthRoutes);
 app.use('/api/v1/questions',  questionsRoutes);
 app.use('/api/v1/attempts',   attemptsRoutes);
 app.use('/api/v1/mock-exams', mockExamsRoutes);

@@ -58,6 +58,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <span className="font-bold text-brand">PsychometricCoach</span>
           </Link>
         </div>
+
+        {/* Account bar — sign out always in view, top of sidebar */}
+        <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3 bg-gray-50/60">
+          <div className="w-9 h-9 bg-brand rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">{user.name[0]}</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
+            <p className="text-xs text-gray-500 capitalize">{user.plan.toLowerCase()} plan{isAdmin ? ' · admin' : ''}</p>
+          </div>
+          <button onClick={() => { logout(); router.push('/'); }}
+            className="shrink-0 flex items-center gap-1.5 text-sm font-semibold text-gray-700 border border-gray-200 rounded-xl px-3 py-2 hover:border-red-300 hover:bg-red-50 hover:text-error transition-all"
+            aria-label="Sign out">
+            <span aria-hidden="true">⏻</span> Sign out
+          </button>
+        </div>
         <nav className="flex-1 p-4 space-y-4 overflow-y-auto">
           {navGroups.map(g => (
             <div key={g.title}>
@@ -91,14 +105,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="p-3 border-t border-gray-100">
           <AdBanner slot="SIDEBAR" className="mb-2" />
         </div>
-        <div className="p-4 border-t border-gray-100">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 bg-brand rounded-full flex items-center justify-center text-white font-bold text-sm">{user.name[0]}</div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
-              <p className="text-xs text-gray-500 capitalize">{user.plan.toLowerCase()} plan{isAdmin ? ' · admin' : ''}</p>
-            </div>
-          </div>
           <button onClick={() => { logout(); router.push('/'); }}
             className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-gray-700 border border-gray-200 rounded-xl py-2.5 hover:border-red-200 hover:bg-red-50 hover:text-error transition-all">
             <span aria-hidden="true">⏻</span> Sign out

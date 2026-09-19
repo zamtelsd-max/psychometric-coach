@@ -33,6 +33,8 @@ model User {
   certifications EmployeeCertification[]
   customTests    CustomTest[]
   completions    ModuleCompletion[]
+  competencyRoles CompetencyRole[]
+  gapAnalyses    GapAnalysisRecord[]
   bookmarks      Bookmark[]
   notifications  Notification[]
   studyPlans     StudyPlan?
@@ -67,6 +69,7 @@ model Question {
   subSkill       String
   text           String
   imageUrl       String?
+  caseStudyId    String?
   diagramData    Json?        // { type: "pie"|"bar"|"line"|"table"|"passage", data: {...} }
   options        Json
   explanation    String
@@ -724,5 +727,61 @@ model ModuleCompletion {
 
   @@unique([userId, moduleId])
   @@map("module_completions")
+  @@schema("pc")
+}
+
+// ── SRS FR-3: competency frameworks + machine-readable gap analysis ──
+model CompetencyRole {
+  id           String  @id @default(cuid())
+  name         String
+  baselines    Json // { "Numerical Reasoning": 70, ... } — min % per skill
+  createdBy    String
+  creator      User    @relation(fields: [createdBy], references: [id])
+  gapAnalyses  GapAnalysisRecord[]
+  createdAt    DateTime @default(now())
+
+  @@map("competency_roles")
+  @@schema("pc")
+}
+
+model GapAnalysisRecord {
+  id             String         @id @default(cuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id])
+  roleTitle      String
+  scores         Json // { skill: accuracyPct }
+  gaps           Json // [skills below baseline]
+  belowThreshold Boolean
+  createdAt      DateTime       @default(now())
+
+  @@map("gap_analysis_records")
+  @@schema("pc")
+}
+
+// ── SRS FR-9.1: base price management (singleton row) ──
+model PlatformPricing {
+  id                    String   @id @default("singleton")
+  enterpriseMonthlyUsd  Decimal  @db.Decimal(10, 2) @default(29.00)
+  candidateLinkUsd      Decimal  @db.Decimal(10, 2) @default(4.00)
+  updatedBy             String?
+  updatedAt             DateTime @updatedAt
+
+  @@map("platform_pricing")
+  @@schema("pc")
+}
+
+// ── SRS FR-9.3: system-wide promotional banners ──
+model PromoBanner {
+  id        String    @id @default(cuid())
+  message   String
+  ctaText   String    @default("")
+  ctaUrl    String    @default("")
+  audience  String    @default("ALL") // ALL | TRIAL
+  isActive  Boolean   @default(true)
+  expiresAt DateTime?
+  createdBy String
+  createdAt DateTime  @default(now())
+
+  @@map("promo_banners")
   @@schema("pc")
 }

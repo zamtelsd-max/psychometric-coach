@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '../../store/authStore';
 import AdBanner from '../../components/AdBanner';
+import { useEffect as useEf2, useState as useSt2 } from 'react';
 
 const navGroups = [
   { title: 'Practice Hub', items: [
@@ -38,8 +39,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const path = usePathname();
 
+  const [promo, setPromo] = useSt2<any>(null);
   useEffect(() => {
     if (!user) router.replace('/login');
+    else fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://www.psychometriccoach.com/api/v1'}/platform/banners/active?plan=${user.plan}`).then(r => r.json()).then(d => setPromo(d.banners?.[0] ?? null)).catch(() => {});
   }, [user, router]);
 
   if (!user) return null;
@@ -76,6 +79,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <Link href="/admin/cms" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${path.startsWith('/admin/cms') ? 'bg-brand/10 text-brand font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
                 <span className="text-lg">📁</span>CMS Studio
               </Link>
+              <Link href="/admin/pricing" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${path.startsWith('/admin/pricing') ? 'bg-brand/10 text-brand font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
+                <span className="text-lg">💲</span>Price &amp; Promo Studio
+              </Link>
+              <Link href="/admin/competencies" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${path.startsWith('/admin/competencies') ? 'bg-brand/10 text-brand font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
+                <span className="text-lg">🎯</span>Competency Baselines
+              </Link>
             </div>
           )}
         </nav>
@@ -97,6 +106,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <main className="flex-1 lg:ml-64 pb-20 lg:pb-0 min-h-screen">
+        {promo && (
+          <div className="flex items-center justify-center gap-3 px-4 py-2 text-sm font-semibold" style={{ background: 'linear-gradient(90deg,#1B365D,#0A528A)', color: '#fff' }}>
+            <span style={{ color: '#D4AF37' }}>📣</span>{promo.message}
+            {promo.ctaText && <a href={promo.ctaUrl || '#'} className="underline font-bold" style={{ color: '#D4AF37' }}>{promo.ctaText}</a>}
+          </div>
+        )}
         <div className="lg:hidden px-3 pt-3"><AdBanner slot="FOOTER_BANNER" /></div>
         {children}
       </main>

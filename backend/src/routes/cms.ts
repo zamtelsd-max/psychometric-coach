@@ -93,4 +93,27 @@ router.delete('/cases/:id', authenticate, adminOnly, async (req: AuthRequest, re
   res.json({ ok: true });
 });
 
+
+// ── CMS-in-questions hookup (SRS §5 integration): attach media + case studies ──
+router.patch('/questions/:id', authenticate, adminOnly, async (req: AuthRequest, res: Response): Promise<void> => {
+  const { imageUrl, caseStudyId } = req.body as { imageUrl?: string; caseStudyId?: string | null };
+  const data: any = {};
+  if (imageUrl !== undefined) {
+    if (imageUrl && !/^\/api\/v1\/cms\/media\/[a-z0-9]+$/.test(imageUrl)) { res.status(400).json({ error: 'imageUrl must be a CMS media URL (/api/v1/cms/media/<id>)' }); return; }
+    data.imageUrl = imageUrl || null;
+  }
+  if (caseStudyId !== undefined) data.caseStudyId = caseStudyId;
+  const q = await prisma.question.update({ where: { id: req.params.id }, data, select: { id: true, text: true, imageUrl: true, caseStudyId: true } });
+  res.json({ question: q });
+});
+router.get('/questions', authenticate, adminOnly, async (req: AuthRequest, res: Response): Promise<void> => {
+  const q = String(req.query.q || '');
+  res.json({ questions: await prisma.question.findMany({ where: { text: { contains: q, mode: 'insensitive' } }, orderBy: { createdAt: 'asc' }, take: 20, select: { id: true, text: true, imageUrl: true, caseStudyId: true, subSkill: true } }) });
+});
+router.get('/cases/:id', authenticate, adminOnly, async (req: AuthRequest, res: Response): Promise<void> => {
+  const c = await prisma.caseStudy.findUnique({ where: { id: req.params.id }, select: { id: true, title: true, bodyHtml: true } });
+  if (!c) { res.status(404).json({ error: 'not found' }); return; }
+  res.json({ case: c });
+});
+
 export default router;

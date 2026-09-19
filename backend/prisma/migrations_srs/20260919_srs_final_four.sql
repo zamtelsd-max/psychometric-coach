@@ -1,0 +1,36 @@
+-- SRS final four: FR-3, FR-9.1, FR-9.3, CMS-in-questions
+CREATE TABLE IF NOT EXISTS competency_roles (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  baselines JSONB NOT NULL DEFAULT '{}',
+  created_by TEXT NOT NULL REFERENCES users(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS gap_analysis_records (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  role_title TEXT NOT NULL,
+  scores JSONB NOT NULL,
+  gaps JSONB NOT NULL,
+  below_threshold BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS platform_pricing (
+  id TEXT PRIMARY KEY DEFAULT 'singleton',
+  enterprise_monthly_usd NUMERIC(10,2) NOT NULL DEFAULT 29.00,
+  candidate_link_usd NUMERIC(10,2) NOT NULL DEFAULT 4.00,
+  updated_by TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS promo_banners (
+  id TEXT PRIMARY KEY,
+  message TEXT NOT NULL,
+  cta_text TEXT NOT NULL DEFAULT '',
+  cta_url TEXT NOT NULL DEFAULT '',
+  audience TEXT NOT NULL DEFAULT 'ALL',
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  expires_at TIMESTAMPTZ,
+  created_by TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS case_study_id TEXT;

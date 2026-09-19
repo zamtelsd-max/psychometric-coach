@@ -61,10 +61,18 @@ router.post(
       const passwordHash = await bcrypt.hash(password, 12);
       const verifyToken = crypto.randomBytes(32).toString('hex');
       const verifyTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+      const isEmployer = (req.body as any).accountType === 'employer';
+      const companyName = String((req.body as any).companyName || '').trim();
       const user = await prisma.user.create({
-        data: { email, passwordHash, name, emailVerified: false, verifyToken, verifyTokenExpiry },
+        data: {
+          email, passwordHash, name, emailVerified: false, verifyToken, verifyTokenExpiry,
+          ...(isEmployer && companyName ? { plan: 'TRIAL' as const } : {}),
+        },
         select: { id: true, email: true, name: true },
       });
+      if (isEmployer && companyName) {
+        await prisma.enterprise.create({ data: { name: companyName.slice(0, 120), ownerEmail: email, trialStartedAt: new Date(), isTrialActive: true, trialDays: 7 } });
+      }
 
       sendVerificationEmail(user.email, user.name, verifyToken);
 

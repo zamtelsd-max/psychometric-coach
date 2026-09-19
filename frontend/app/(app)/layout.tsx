@@ -22,6 +22,7 @@ const navGroups = [
     { href: '/passports', icon: '🎫', label: 'Prep Passports' },
   ]},
   { title: 'Enterprise', items: [
+    { href: '/employer', icon: '👔', label: 'Employer Workspace' },
     { href: '/enterprise', icon: '💼', label: 'Enterprise Hub' },
     { href: '/screening-admin', icon: '🛡️', label: 'Recruiter Console' },
   ]},
@@ -37,7 +38,7 @@ const mobileItems = [
   { href: '/dashboard', icon: '🏠', label: 'Home' },
   { href: '/assessments', icon: '🎯', label: 'Tests' },
   { href: '/interview', icon: '🎤', label: 'Interview' },
-  { href: '/enterprise', icon: '💼', label: 'Enterprise' },
+  { href: '/employer', icon: '👔', label: 'Employers' },
   { href: '/profile', icon: '👤', label: 'Profile' },
 ];
 

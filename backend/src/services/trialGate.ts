@@ -10,6 +10,7 @@ interface EnterpriseRecord {
   isPaidSubscriber: boolean;
   isTrialActive: boolean;
   trialStartedAt: Date | null;
+  trialDays?: number | null;
 }
 
 export function verifyEnterpriseAccessGates(enterpriseRecord: EnterpriseRecord, requestedFeature?: GateFeature): GateVerdict {
@@ -19,7 +20,7 @@ export function verifyEnterpriseAccessGates(enterpriseRecord: EnterpriseRecord, 
 
   if (enterpriseRecord.isTrialActive === true && enterpriseRecord.trialStartedAt) {
     const trialExpiryDate = new Date(enterpriseRecord.trialStartedAt);
-    trialExpiryDate.setDate(trialExpiryDate.getDate() + 30);
+    trialExpiryDate.setDate(trialExpiryDate.getDate() + (enterpriseRecord.trialDays ?? 30));
     if (today <= trialExpiryDate) {
       if (requestedFeature && GATED_PREMIUM_FEATURES.includes(requestedFeature)) {
         return 'REJECT_ACCESS_REDIRECT_TO_DODO_CHECKOUT';

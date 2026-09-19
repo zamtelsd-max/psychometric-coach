@@ -28,8 +28,11 @@ export default function ScreeningClient() {
     setToken(new URLSearchParams(window.location.search).get('t') || '');
   }, []);
 
-  const logViolation = useCallback(async (type: string, detail?: string) => {
-    setViolationModal(type);
+  // Log a proctoring event. `alert` = show the pause modal (only genuine
+  // look-aways alert the candidate); everything else is logged silently for
+  // the recruiter dashboard.
+  const logViolation = useCallback(async (type: string, detail?: string, alert = false) => {
+    if (alert) setViolationModal(type);
     try { await fetch(`${API}/screening/${id}/log-violation`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: token, type, detail }) }); } catch {}
   }, [id, token]);
 
@@ -45,6 +48,8 @@ export default function ScreeningClient() {
   // SR-B2B-04: block clipboard/dev-tool keys
   useEffect(() => {
     if (phase !== 'active') return;
+    // Silent monitoring: still logged to the recruiter dashboard, but no
+    // candidate-facing alert (only look-away detection alerts).
     const onKey = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase();
       if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'x'].includes(k)) { e.preventDefault(); logViolation('CLIPBOARD', k); }
@@ -79,8 +84,8 @@ export default function ScreeningClient() {
           try {
             const faces = await detector.estimateFaces(videoRef.current);
             const now = Date.now();
-            if (faces.length > 1) logViolation('MULTI_FACE', `${faces.length} faces`); // SR-B2B-07
-            if (faces.length === 0) { absentRef.current = absentRef.current || now; if (now - absentRef.current > 4000) { logViolation('FACE_ABSENT'); absentRef.current = now; } } // SR-B2B-08
+            if (faces.length > 1) logViolation('MULTI_FACE', `${faces.length} faces`); // SR-B2B-07 (silent log)
+            if (faces.length === 0) { absentRef.current = absentRef.current || now; if (now - absentRef.current > 4000) { logViolation('FACE_ABSENT', 'left frame >4s', true); absentRef.current = now; } } // SR-B2B-08 (candidate left the screen → alert)
             else { absentRef.current = 0; }
             if (faces.length === 1) { // SR-B2B-09 gaze via iris vs nose
               const kp = faces[0].keypoints;
@@ -89,7 +94,7 @@ export default function ScreeningClient() {
               const ri = kp.find((p: any) => p.name === 'rightEyeIris') || kp[473];
               if (nose && li && ri) {
                 const off = Math.abs(((li.x + ri.x) / 2) - nose.x);
-                if (off > 28) { gazeBadRef.current = gazeBadRef.current || now; if (now - gazeBadRef.current > 4000) { logViolation('GAZE_DIVERSION', off.toFixed(0)); gazeBadRef.current = now; } }
+                if (off > 28) { gazeBadRef.current = gazeBadRef.current || now; if (now - gazeBadRef.current > 4000) { logViolation('GAZE_DIVERSION', off.toFixed(0), true); gazeBadRef.current = now; } } // sustained look-away → the ONE alerting event
                 else gazeBadRef.current = 0;
               }
             }
@@ -132,7 +137,7 @@ export default function ScreeningClient() {
     setMode('reading'); setTimeLeft(assessment.readingSec); setPhase('active');
   };
 
-  const resumeFromViolation = async () => { try { await (document.documentElement as any).requestFullscreen?.(); } catch {} setViolationModal(null); };
+  const resumeFromViolation = async () => { if (!document.fullscreenElement) { try { await (document.documentElement as any).requestFullscreen?.(); } catch {} } setViolationModal(null); };
 
   const wrap: React.CSSProperties = { minHeight: '100vh', background: BRAND, color: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: 'Inter,system-ui,sans-serif' };
 
@@ -184,10 +189,10 @@ export default function ScreeningClient() {
       {violationModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div style={{ maxWidth: 420, textAlign: 'center', padding: 30 }}>
-            <div style={{ fontSize: 44 }}>⚠️</div>
-            <h2 style={{ fontWeight: 900, margin: '10px 0' }}>Assessment paused</h2>
-            <p style={{ color: '#cbd5e1', fontSize: 14 }}>A monitoring event was detected ({violationModal.replace(/_/g, ' ').toLowerCase()}). This has been logged. Return to fullscreen to continue — your progress is safe.</p>
-            <button onClick={resumeFromViolation} style={{ marginTop: 16, background: GOLD, color: BRAND, fontWeight: 800, padding: '12px 24px', borderRadius: 10, border: 'none', cursor: 'pointer' }}>Resume in fullscreen</button>
+            <div style={{ fontSize: 44 }}>👀</div>
+            <h2 style={{ fontWeight: 900, margin: '10px 0' }}>Please look at the screen</h2>
+            <p style={{ color: '#cbd5e1', fontSize: 14 }}>You appear to have been looking away from the screen. This has been logged for the recruiter. Your progress is safe — the assessment continues once you resume.</p>
+            <button onClick={resumeFromViolation} style={{ marginTop: 16, background: GOLD, color: BRAND, fontWeight: 800, padding: '12px 24px', borderRadius: 10, border: 'none', cursor: 'pointer' }}>I&apos;m back — resume</button>
           </div>
         </div>
       )}

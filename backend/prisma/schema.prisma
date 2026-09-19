@@ -550,11 +550,15 @@ enum BadgeTier {
   NONE
   GOLD
   PLATINUM
+
+  @@schema("pc")
 }
 
 enum DiscountType {
   PERCENTAGE
   FLAT_FIXED
+
+  @@schema("pc")
 }
 
 model Enterprise {

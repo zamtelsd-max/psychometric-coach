@@ -26,7 +26,7 @@ export function evaluateExamSubmission(rawScore: number, _employeeId: string, _c
 export async function recordCertification(employeeId: string, courseId: string, rawScore: number) {
   const verdict = evaluateExamSubmission(rawScore, employeeId, courseId);
   const cert = await prisma.employeeCertification.upsert({
-    where: { employeeId_courseId: { employeeId, courseId } },
+    where: { unique_employee_course_cert: { employeeId, courseId } },
     update: { examScore: verdict.final_percentage, badgeTier: verdict.badge_tier, certifiedAt: new Date() },
     create: { employeeId, courseId, examScore: verdict.final_percentage, badgeTier: verdict.badge_tier },
   });

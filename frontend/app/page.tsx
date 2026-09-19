@@ -443,6 +443,7 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-3">
             <Link href="/advertise" className="text-sm font-medium text-gray-500 hover:text-brand px-3 py-2 hidden sm:block">Advertise</Link>
+            <Link href="/enterprise" className="text-sm font-medium text-gray-600 hover:text-brand px-3 py-2 hidden md:block">For Employers</Link>
             <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-brand px-3 py-2">Sign In</Link>
             <Link href="/register" className="text-sm font-semibold bg-brand text-white px-4 py-2 rounded-xl hover:bg-brand-dark">Get Started Free</Link>
           </div>

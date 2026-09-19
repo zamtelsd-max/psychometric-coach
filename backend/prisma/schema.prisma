@@ -569,6 +569,7 @@ model Enterprise {
   trialStartedAt      DateTime?
   isTrialActive       Boolean   @default(false)
   isPaidSubscriber    Boolean   @default(false)
+  reports             MonthlyReport[]
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
@@ -649,5 +650,20 @@ model TestLink {
   createdAt      DateTime   @default(now())
 
   @@map("test_links")
+  @@schema("pc")
+}
+
+// ── SRS FR-8.2: auto-compiled Monthly Status Reports ──
+model MonthlyReport {
+  id           String   @id @default(cuid())
+  enterpriseId String
+  enterprise   Enterprise @relation(fields: [enterpriseId], references: [id])
+  month        String // "2026-09"
+  data         Json
+  emailedAt    DateTime?
+  createdAt    DateTime @default(now())
+
+  @@unique([enterpriseId, month])
+  @@map("monthly_reports")
   @@schema("pc")
 }

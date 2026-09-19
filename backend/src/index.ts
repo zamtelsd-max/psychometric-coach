@@ -22,6 +22,7 @@ import assessmentsRoutes from './routes/assessments';
 import dodoWebhookRoutes from './routes/dodoWebhooks';
 import couponsRoutes from './routes/coupons';
 import growthRoutes from './routes/growth';
+import { startMsrScheduler } from './services/msr';
 import logger from './lib/logger';
 
 const app = express();
@@ -132,6 +133,7 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
   res.status(500).json({ error: 'Internal server error' });
 });
 
+startMsrScheduler();
 app.listen(PORT, () => {
   logger.info(`PsychometricCoach API running on port ${PORT} (pid ${process.pid})`);
 });

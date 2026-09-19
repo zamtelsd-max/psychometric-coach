@@ -24,7 +24,7 @@ async function main() {
       headline: 'Reach thousands of job-seekers & HR teams',
       bodyText: 'Promote your brand across PsychometricCoach assessments, practice screens and dashboards.',
       ctaText: 'Start advertising', ctaUrl: 'https://www.psychometriccoach.com/advertise',
-      slot: 'SIDEBAR', status: 'ACTIVE', budget: 0,
+      slot: 'SIDEBAR', status: 'PENDING   // awaiting admin review', budget: 0,
     } });
   }
   console.log(`promo seeded (banners + house ad) — ${month}`);

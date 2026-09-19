@@ -2,8 +2,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuthStore } from '../../store/authStore';
-import AdBanner from '../../components/AdBanner';
+import { useAuthStore } from '../store/authStore';
+import AdBanner from './AdBanner';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://www.psychometriccoach.com/api/v1';
 

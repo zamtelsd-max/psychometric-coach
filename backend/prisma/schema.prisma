@@ -31,6 +31,7 @@ model User {
   xpPoints       Int            @default(0)
   attempts       Attempt[]
   certifications EmployeeCertification[]
+  customTests    CustomTest[]
   bookmarks      Bookmark[]
   notifications  Notification[]
   studyPlans     StudyPlan?
@@ -611,3 +612,38 @@ model LocalizationAsset {
   @@schema("pc")
 }
 
+
+// ── SRS FR-1: Test Architect (custom test assembly + candidate links) ──
+model CustomTest {
+  id          String     @id @default(cuid())
+  title       String
+  description String     @default("")
+  createdBy   String
+  creator     User       @relation(fields: [createdBy], references: [id])
+  questionIds String[]
+  isPublic    Boolean    @default(true)
+  linkToken   String     @unique
+  links       TestLink[]
+  createdAt   DateTime   @default(now())
+
+  @@map("custom_tests")
+  @@schema("pc")
+}
+
+model TestLink {
+  id             String     @id @default(cuid())
+  token          String     @unique
+  testId         String
+  test           CustomTest @relation(fields: [testId], references: [id])
+  candidateEmail String
+  candidateName  String?
+  responses      Json?
+  usedCount      Int        @default(0)
+  submittedAt    DateTime?
+  inviteSentAt   DateTime?
+  expiresAt      DateTime?
+  createdAt      DateTime   @default(now())
+
+  @@map("test_links")
+  @@schema("pc")
+}

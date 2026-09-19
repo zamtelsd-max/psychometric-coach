@@ -5,6 +5,13 @@ const BRAND = '#1B365D', GOLD = '#D4AF37';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://www.psychometriccoach.com/api/v1';
 
+// ?demo=1 — proctoring test mode: real camera + detection, zero backend calls.
+const DEMO_ASSESSMENT = {
+  role: 'TEST MODE — Look-away preview',
+  readingSec: 60, speakingSec: 90,
+  questions: [{ id: 'demo-q1', questionText: 'Sit normally and look at the screen for a few seconds — then look away (or step away) for about 7 seconds. The look-away modal should appear. Nothing is logged anywhere in test mode.' }],
+};
+
 export default function ScreeningClient() {
   const [id, setId] = useState('');
   const [token, setToken] = useState('');
@@ -20,30 +27,37 @@ export default function ScreeningClient() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const timerRef = useRef<any>(null);
   const gazeBadRef = useRef(0);
+  const [isDemo, setIsDemo] = useState(false);
+  const [demoStats, setDemoStats] = useState<{ faces: number; ever: boolean; streak: number } | null>(null);
 
   // read id + token from URL
   useEffect(() => {
     const parts = window.location.pathname.split('/');
     setId(parts[parts.indexOf('screening') + 1] || '');
-    setToken(new URLSearchParams(window.location.search).get('t') || '');
+    const params = new URLSearchParams(window.location.search);
+    setToken(params.get('t') || '');
+    setIsDemo(params.get('demo') === '1');
   }, []);
 
   // Log a proctoring event. `alert` = show the pause modal (only genuine
   // look-aways alert the candidate); everything else is logged silently for
-  // the recruiter dashboard.
+  // the recruiter dashboard. In ?demo=1 test mode: modals preview locally,
+  // nothing is ever sent to the backend.
   const logViolation = useCallback(async (type: string, detail?: string, alert = false) => {
     if (alert) setViolationModal(type);
+    if (isDemo) return;
     try { await fetch(`${API}/screening/${id}/log-violation`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: token, type, detail }) }); } catch {}
-  }, [id, token]);
+  }, [id, token, isDemo]);
 
-  // fetch assessment
+  // fetch assessment (demo mode loads a mock and skips the network entirely)
   useEffect(() => {
+    if (isDemo) { setAssessment(DEMO_ASSESSMENT); setTimeLeft(DEMO_ASSESSMENT.readingSec); setPhase('consent'); return; }
     if (!id || !token) return;
     fetch(`${API}/screening/candidate/${id}?t=${encodeURIComponent(token)}`).then(r => r.json()).then(d => {
       if (d.error) { setErrMsg(d.error); setPhase('error'); return; }
       setAssessment(d.assessment); setTimeLeft(d.assessment.readingSec); setPhase('consent');
     }).catch(() => { setErrMsg('Could not load assessment.'); setPhase('error'); });
-  }, [id, token]);
+  }, [id, token, isDemo]);
 
   // SR-B2B-04: block clipboard/dev-tool keys
   useEffect(() => {
@@ -103,6 +117,7 @@ export default function ScreeningClient() {
           try { faces = (await detector.estimateFaces(videoRef.current)) || []; } catch { faces = []; }
           const slow = (Date.now() - t0) > 3000; // inference too slow to judge absence from this cycle
           const now = Date.now();
+          if (isDemo) setDemoStats({ faces: faces.length, ever: everDetected, streak: zeroStreak });
           if (faces.length > 1) logViolation('MULTI_FACE', `${faces.length} faces`); // SR-B2B-07 (silent log)
           if (faces.length >= 1) {
             everDetected = true; zeroStreak = 0; absentStart = 0;
@@ -158,17 +173,19 @@ export default function ScreeningClient() {
     if (mode === 'reading') { setMode('speaking'); setTimeLeft(assessment.speakingSec); return; }
     // speaking done → commit answer, next question
     const q = assessment.questions[qIdx];
-    try { await fetch(`${API}/screening/candidate/${id}/answer`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: token, questionId: q.id, answer }) }); } catch {}
+    if (!isDemo) { try { await fetch(`${API}/screening/candidate/${id}/answer`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: token, questionId: q.id, answer }) }); } catch {} }
     setAnswer('');
     if (qIdx + 1 >= assessment.questions.length) {
-      try { await fetch(`${API}/screening/candidate/${id}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: token }) }); } catch {}
+      if (!isDemo) { try { await fetch(`${API}/screening/candidate/${id}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: token }) }); } catch {} }
       document.exitFullscreen?.().catch(() => {}); setPhase('done');
     } else { setQIdx(qIdx + 1); setMode('reading'); setTimeLeft(assessment.readingSec); }
   };
 
   const beginAssessment = async () => {
-    try { await (document.documentElement as any).requestFullscreen?.(); } catch {} // SR-B2B-01
-    try { await fetch(`${API}/screening/candidate/${id}/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: token }) }); } catch {}
+    if (!isDemo) {
+      try { await (document.documentElement as any).requestFullscreen?.(); } catch {} // SR-B2B-01
+      try { await fetch(`${API}/screening/candidate/${id}/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: token }) }); } catch {}
+    }
     setMode('reading'); setTimeLeft(assessment.readingSec); setPhase('active');
   };
 
@@ -181,7 +198,7 @@ export default function ScreeningClient() {
 
   if (phase === 'consent') return (
     <div style={wrap}><div style={{ maxWidth: 520, background: 'rgba(15,23,42,.5)', backdropFilter: 'blur(8px)', borderRadius: 20, padding: 30, border: '1px solid rgba(212,175,55,.3)' }}>
-      <span style={{ background: GOLD, color: BRAND, fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 20 }}>SECURE ASSESSMENT</span>
+      <span style={{ background: GOLD, color: BRAND, fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 20 }}>{isDemo ? '🧪 TEST MODE — nothing is logged' : 'SECURE ASSESSMENT'}</span>
       <h1 style={{ fontSize: 24, fontWeight: 900, margin: '14px 0 8px' }}>{assessment.role}</h1>
       <p style={{ color: '#cbd5e1', fontSize: 14, lineHeight: 1.6 }}>This is a proctored assessment. By starting you consent to:</p>
       <ul style={{ color: '#cbd5e1', fontSize: 13.5, lineHeight: 1.9, margin: '10px 0 16px', paddingLeft: 20 }}>
@@ -203,6 +220,16 @@ export default function ScreeningClient() {
     <div style={{ minHeight: '100vh', background: BRAND, color: '#f1f5f9', fontFamily: 'Inter,system-ui,sans-serif', userSelect: 'none' }}>
       <video ref={videoRef} muted playsInline style={{ position: 'fixed', bottom: 16, right: 16, width: 128, height: 96, borderRadius: 10, border: `2px solid ${GOLD}`, objectFit: 'cover', zIndex: 5 }} />
       <div style={{ position: 'fixed', bottom: 118, right: 16, fontSize: 10, color: '#94a3b8', zIndex: 5 }}>● {proctorStatus}</div>
+      {isDemo && (
+        <div style={{ position: 'fixed', bottom: 16, left: 16, zIndex: 6, background: 'rgba(15,23,42,.9)', border: '1px solid rgba(212,175,55,.4)', borderRadius: 12, padding: 14, maxWidth: 280, fontSize: 12, color: '#e2e8f0' }}>
+          <p style={{ margin: '0 0 8px', fontWeight: 800, color: GOLD }}>🧪 TEST MODE — proctoring preview</p>
+          <p style={{ margin: '0 0 6px' }}>Faces seen: <b>{demoStats?.faces ?? '–'}</b> · model has detected you: <b>{demoStats?.ever ? 'yes' : 'not yet'}</b> · missed streak: <b>{demoStats?.streak ?? 0}</b></p>
+          <p style={{ margin: '0 0 10px', color: '#94a3b8' }}>{proctorStatus}</p>
+          <button onClick={() => setViolationModal('GAZE_DIVERSION')} style={{ background: GOLD, color: BRAND, fontWeight: 800, padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, marginRight: 8 }}>Preview gaze modal</button>
+          <button onClick={() => setViolationModal('FACE_ABSENT')} style={{ background: GOLD, color: BRAND, fontWeight: 800, padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12 }}>Preview face-left modal</button>
+          <p style={{ margin: '10px 0 0', color: '#64748b' }}>Or just look away for ~7s to trigger it live. Nothing is logged anywhere.</p>
+        </div>
+      )}
       <div style={{ maxWidth: 760, margin: '0 auto', padding: '30px 20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <span style={{ fontSize: 13, color: '#94a3b8' }}>Question {qIdx + 1} / {assessment.questions.length}</span>

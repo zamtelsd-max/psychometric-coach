@@ -29,6 +29,7 @@ export default function ScreeningClient() {
   const gazeBadRef = useRef(0);
   const [isDemo, setIsDemo] = useState(false);
   const [demoStats, setDemoStats] = useState<{ faces: number; ever: boolean; streak: number } | null>(null);
+  const [demoFeed, setDemoFeed] = useState<{ type: string; alert: boolean; at: string }[]>([]);
 
   // read id + token from URL
   useEffect(() => {
@@ -45,7 +46,7 @@ export default function ScreeningClient() {
   // nothing is ever sent to the backend.
   const logViolation = useCallback(async (type: string, detail?: string, alert = false) => {
     if (alert) setViolationModal(type);
-    if (isDemo) return;
+    if (isDemo) { setDemoFeed(f => [{ type, alert, at: new Date().toLocaleTimeString() }, ...f].slice(0, 6)); return; }
     try { await fetch(`${API}/screening/${id}/log-violation`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: token, type, detail }) }); } catch {}
   }, [id, token, isDemo]);
 
@@ -225,9 +226,21 @@ export default function ScreeningClient() {
           <p style={{ margin: '0 0 8px', fontWeight: 800, color: GOLD }}>🧪 TEST MODE — proctoring preview</p>
           <p style={{ margin: '0 0 6px' }}>Faces seen: <b>{demoStats?.faces ?? '–'}</b> · model has detected you: <b>{demoStats?.ever ? 'yes' : 'not yet'}</b> · missed streak: <b>{demoStats?.streak ?? 0}</b></p>
           <p style={{ margin: '0 0 10px', color: '#94a3b8' }}>{proctorStatus}</p>
-          <button onClick={() => setViolationModal('GAZE_DIVERSION')} style={{ background: GOLD, color: BRAND, fontWeight: 800, padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, marginRight: 8 }}>Preview gaze modal</button>
-          <button onClick={() => setViolationModal('FACE_ABSENT')} style={{ background: GOLD, color: BRAND, fontWeight: 800, padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12 }}>Preview face-left modal</button>
-          <p style={{ margin: '10px 0 0', color: '#64748b' }}>Or just look away for ~7s to trigger it live. Nothing is logged anywhere.</p>
+          <button onClick={() => setViolationModal('GAZE_DIVERSION')} style={{ background: GOLD, color: BRAND, fontWeight: 800, padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, marginRight: 8 }}>Gaze modal</button>
+          <button onClick={() => setViolationModal('FACE_ABSENT')} style={{ background: GOLD, color: BRAND, fontWeight: 800, padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, marginRight: 8 }}>Face-left modal</button>
+          <button onClick={() => setViolationModal('MULTI_FACE')} style={{ background: GOLD, color: BRAND, fontWeight: 800, padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, marginRight: 8 }}>Multi-face modal</button>
+          <button onClick={() => setViolationModal('VISIBILITY')} style={{ background: GOLD, color: BRAND, fontWeight: 800, padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12 }}>Tab-switch modal</button>
+          <p style={{ margin: '10px 0 6px', color: '#64748b' }}>Or trigger them live: look away ~7s, bring a second face into frame, or switch tabs. Nothing is logged anywhere.</p>
+          {demoFeed.length > 0 && (
+            <div>
+              <p style={{ margin: '0 0 4px', fontWeight: 800, color: GOLD }}>Event feed (what the recruiter would see)</p>
+              {demoFeed.map((e, i) => (
+                <p key={i} style={{ margin: '2px 0', fontSize: 11, color: e.alert ? '#fbbf24' : '#64748b' }}>
+                  {e.at} · {e.type.replace(/_/g, ' ')} · {e.alert ? '⚠️ candidate alerted' : 'silent log only'}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
       )}
       <div style={{ maxWidth: 760, margin: '0 auto', padding: '30px 20px' }}>
@@ -248,16 +261,27 @@ export default function ScreeningClient() {
           {mode === 'reading' ? 'Start answering →' : qIdx + 1 >= assessment.questions.length ? 'Submit assessment' : 'Next question →'}
         </button>
       </div>
-      {violationModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ maxWidth: 420, textAlign: 'center', padding: 30 }}>
-            <div style={{ fontSize: 44 }}>👀</div>
-            <h2 style={{ fontWeight: 900, margin: '10px 0' }}>Please look at the screen</h2>
-            <p style={{ color: '#cbd5e1', fontSize: 14 }}>You appear to have been looking away from the screen. This has been logged for the recruiter. Your progress is safe — the assessment continues once you resume.</p>
-            <button onClick={resumeFromViolation} style={{ marginTop: 16, background: GOLD, color: BRAND, fontWeight: 800, padding: '12px 24px', borderRadius: 10, border: 'none', cursor: 'pointer' }}>I&apos;m back — resume</button>
+      {violationModal && (() => {
+        // Candidate-facing copy adapts to the event type (demo mode can preview each)
+        const lookAway = violationModal === 'GAZE_DIVERSION' || violationModal === 'FACE_ABSENT';
+        const multi = violationModal === 'MULTI_FACE';
+        const tab = violationModal === 'VISIBILITY';
+        const [icon, title, body] = multi
+          ? ['👥', 'Extra face detected', 'More than one person was seen in the camera. This has been logged for the recruiter. If someone else entered the room, ask them to step out — the assessment continues once you resume.']
+          : tab
+          ? ['🔄', 'Tab switch detected', 'You left the assessment tab. This has been logged for the recruiter. Your progress is safe — the assessment continues once you resume.']
+          : ['👀', 'Please look at the screen', 'You appear to have been looking away from the screen. This has been logged for the recruiter. Your progress is safe — the assessment continues once you resume.'];
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+            <div style={{ maxWidth: 420, textAlign: 'center', padding: 30 }}>
+              <div style={{ fontSize: 44 }}>{icon}</div>
+              <h2 style={{ fontWeight: 900, margin: '10px 0' }}>{title}</h2>
+              <p style={{ color: '#cbd5e1', fontSize: 14 }}>{body}</p>
+              <button onClick={resumeFromViolation} style={{ marginTop: 16, background: GOLD, color: BRAND, fontWeight: 800, padding: '12px 24px', borderRadius: 10, border: 'none', cursor: 'pointer' }}>I&apos;m back — resume</button>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

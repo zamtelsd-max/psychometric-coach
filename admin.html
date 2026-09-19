@@ -1,0 +1,124 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PsychometricCoach — Admin · Subscribers</title>
+<link rel="icon" href="/favicon.ico"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+:root{--navy:#1B365D;--gold:#D4AF37;--ink:#0f172a;--mut:#64748b;--line:#e2e8f0;--bg:#f5f7fa}
+body{background:var(--bg);color:var(--ink);padding:20px}
+header{max-width:1200px;margin:0 auto 20px;display:flex;align-items:center;gap:12px}
+header img{height:40px;width:40px;border-radius:8px;object-fit:cover}
+header h1{font-size:22px;color:var(--navy)}header h1 b{color:var(--gold)}
+.sub{color:var(--mut);font-size:13px}
+.wrap{max-width:1200px;margin:0 auto}
+.gate{max-width:420px;margin:60px auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:28px;text-align:center}
+.gate h2{color:var(--navy)}
+.gate input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;margin:12px 0;font-size:15px}
+.btn{background:var(--navy);color:#fff;font-weight:700;border:none;padding:11px 20px;border-radius:10px;cursor:pointer;font-size:14px}
+.btn:hover{opacity:.92}.btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--navy)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:22px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px}
+.card .n{font-size:28px;font-weight:900;color:var(--ink)}
+.card .l{font-size:11px;color:var(--mut);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.card.hl .n{color:var(--navy)}.card.gd .n{color:var(--gold)}.card.gr .n{color:#059669}
+.panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:20px}
+.panel h2{font-size:16px;margin-bottom:12px;color:var(--navy)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.toolbar input,.toolbar select{padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px}
+.toolbar input{flex:1;min-width:160px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{background:#f1f5f9;font-weight:700;color:#334155;position:sticky;top:0}
+tbody tr:hover{background:#f8fafc}
+.tblwrap{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.badge{padding:3px 9px;border-radius:99px;font-size:11px;font-weight:700}
+.b-prem{background:#fef3c7;color:#92400e}.b-ent{background:#e0e7ff;color:#3730a3}.b-free{background:#f1f5f9;color:#64748b}
+.b-paid{background:#dcfce7;color:#166534}
+.muted{color:var(--mut)}.err{color:#dc2626;font-size:13px;margin-top:8px}
+</style></head><body>
+<div id="gate" class="gate">
+  <h2>🔐 PsychometricCoach Admin</h2>
+  <p class="sub" style="margin-top:6px">Enter the admin key to view subscribers</p>
+  <input id="key" type="password" placeholder="Admin key" autofocus>
+  <button class="btn" style="width:100%" onclick="load()">Sign In</button>
+  <div id="gerr" class="err"></div>
+</div>
+<div id="app" style="display:none">
+  <header>
+    <img src="/wanctech-logo.png" alt="Wanctech"/>
+    <div><h1>Psychometric<b>Coach</b> — Admin</h1><div class="sub">Subscriber tracking · Powered by Wanctech IT Solutions</div></div>
+    <div style="margin-left:auto"><button class="btn ghost" onclick="dlCsv()">⬇ Export CSV</button> <button class="btn ghost" onclick="load()">↻ Refresh</button></div>
+  </header>
+  <div class="wrap">
+    <div class="cards" id="cards"></div>
+    <div class="panel">
+      <h2>👥 Subscribers <span class="sub" id="subcount"></span></h2>
+      <div class="toolbar">
+        <input id="search" placeholder="Search email / name…" oninput="renderSubs()">
+        <select id="fltPlan" onchange="renderSubs()"><option value="">All plans</option><option value="PREMIUM">Premium</option><option value="ENTERPRISE">Enterprise</option><option value="FREE">Free</option></select>
+      </div>
+      <div class="tblwrap"><table><thead><tr>
+        <th>Email</th><th>Name</th><th>Role</th><th>Plan</th><th>Expires</th><th>Readiness</th><th>Streak</th><th>Joined</th><th>Last active</th>
+      </tr></thead><tbody id="subs"></tbody></table></div>
+    </div>
+    <div class="panel">
+      <h2>🎫 Passport / Purchase History <span class="sub" id="pcount"></span></h2>
+      <div class="tblwrap"><table><thead><tr>
+        <th>Date</th><th>Email</th><th>Passport</th><th>Amount</th><th>Provider</th><th>Status</th>
+      </tr></thead><tbody id="pur"></tbody></table></div>
+    </div>
+  </div>
+</div>
+<script>
+let KEY='',DATA=null;
+const $=id=>document.getElementById(id);
+const fmtDate=s=>s?new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
+const fmtDT=s=>s?new Date(s).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
+async function load(){
+  KEY=$('key').value.trim()||KEY;
+  if(!KEY){$('gerr').textContent='Enter the admin key.';return;}
+  try{
+    const r=await fetch('/api/v1/admin/subscribers',{headers:{'x-admin-key':KEY}});
+    if(r.status===403){$('gerr').textContent='Invalid admin key.';return;}
+    if(!r.ok)throw new Error('failed');
+    DATA=await r.json();
+    $('gate').style.display='none';$('app').style.display='block';
+    renderCards();renderSubs();renderPur();
+  }catch(e){$('gerr').textContent='Could not load. Check the key / connection.';}
+}
+function renderCards(){
+  const s=DATA.stats;
+  $('cards').innerHTML=[
+    ['totalUsers','Total Users','hl'],['paidUsers','Paid Subscribers','gr'],
+    ['premiumUsers','Premium','gd'],['enterpriseUsers','Enterprise','hl'],
+    ['freeUsers','Free',''],['newThisMonth','New This Month','hl'],
+    ['activeLast30Days','Active (30d)',''],['passportRevenue','Passport Rev ($)','gr'],
+  ].map(([k,l,c])=>`<div class="card ${c}"><div class="n">${k==='passportRevenue'?(s[k]||0).toLocaleString():s[k]}</div><div class="l">${l}</div></div>`).join('');
+}
+function planBadge(p){const c=p==='PREMIUM'?'b-prem':p==='ENTERPRISE'?'b-ent':p==='FREE'?'b-free':'b-paid';return `<span class="badge ${c}">${p}</span>`;}
+function renderSubs(){
+  const q=($('search').value||'').toLowerCase(),fp=$('fltPlan').value;
+  let list=DATA.subscribers.filter(u=>{
+    if(q&&!(`${u.email} ${u.name||''}`.toLowerCase().includes(q)))return false;
+    if(fp&&u.plan!==fp)return false;return true;
+  });
+  $('subcount').textContent=`(${list.length})`;
+  $('subs').innerHTML=list.map(u=>`<tr>
+    <td>${u.email}</td><td>${u.name||'—'}</td><td>${u.role}</td><td>${planBadge(u.plan)}</td>
+    <td>${fmtDate(u.planExpiresAt)}</td><td>${u.readinessScore||0}%</td><td>${u.streakDays||0}</td>
+    <td>${fmtDate(u.createdAt)}</td><td>${fmtDT(u.lastActiveAt)}</td></tr>`).join('')||'<tr><td colspan="9" class="muted" style="padding:20px;text-align:center">No matching subscribers</td></tr>';
+}
+function renderPur(){
+  const p=DATA.purchases||[];$('pcount').textContent=`(${p.length})`;
+  $('pur').innerHTML=p.map(x=>`<tr>
+    <td>${fmtDT(x.createdAt)}</td><td>${x.email}</td><td>${x.passportId||'—'}</td>
+    <td>${(x.amount||0).toLocaleString()} ${x.currency||''}</td><td>${x.provider||'—'}</td>
+    <td><span class="badge ${x.status==='paid'?'b-paid':'b-free'}">${x.status}</span></td></tr>`).join('')||'<tr><td colspan="6" class="muted" style="padding:20px;text-align:center">No purchases yet</td></tr>';
+}
+function dlCsv(){
+  const head='email,name,role,plan,planExpiresAt,readinessScore,streakDays,createdAt,lastActiveAt';
+  const rows=DATA.subscribers.map(u=>[u.email,u.name||'',u.role,u.plan,u.planExpiresAt||'',u.readinessScore||0,u.streakDays||0,u.createdAt,u.lastActiveAt||''].map(v=>`"${v}"`).join(','));
+  const blob=new Blob([[head,...rows].join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='psychometric-subscribers.csv';a.click();
+}
+$('key').addEventListener('keydown',e=>{if(e.key==='Enter')load();});
+</script></body></html>

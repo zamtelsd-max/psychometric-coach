@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useCurrency } from '../../hooks/useCurrency';
-import CurrencySelector from '../components'CurrencySelector';
+import CurrencySelector from '../../components/CurrencySelector';
 
 const STATS = [
   { value: '25,000+', label: 'Monthly Active Users' },

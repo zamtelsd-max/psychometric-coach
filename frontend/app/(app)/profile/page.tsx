@@ -1,4 +1,5 @@
-// v9 'use client';
+'use client';
+// v9
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../../../store/authStore';
 import { profileApi, attemptsApi } from '../../../lib/api';

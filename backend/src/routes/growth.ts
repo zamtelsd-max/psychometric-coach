@@ -42,12 +42,12 @@ router.get('/msr', authenticate, requireEnterpriseFeature('DOWNLOAD_MSR_PDF'), a
   const since = new Date(); since.setMonth(since.getMonth() - 1);
   const [certs, attempts] = await Promise.all([
     prisma.employeeCertification.findMany({ where: { certifiedAt: { gte: since } } }),
-    prisma.attempt.findMany({ where: { createdAt: { gte: since } }, select: { score: true, createdAt: true }, orderBy: { createdAt: 'desc' }, take: 1000 }),
+    prisma.attempt.findMany({ where: { createdAt: { gte: since } }, select: { id: true, createdAt: true }, orderBy: { createdAt: 'desc' }, take: 1000 }),
   ]);
   res.json({
     enterprise: enterprise.name, month: new Date().toISOString().slice(0, 7),
     activeSkillGaps: ['Quantitative Aptitude', 'Verbal Reasoning'], // populated by the gap engine as modules complete
-    candidateSuccessRate: attempts.length ? Math.round((attempts.filter(a => Number((a as any).score ?? 0) >= 60).length / attempts.length) * 100) : 0,
+    candidateSuccessRate: attempts.length ? Math.round((certs.length / attempts.length) * 100) : 0,
     badges: { gold: certs.filter(c => c.badgeTier === 'GOLD').length, platinum: certs.filter(c => c.badgeTier === 'PLATINUM').length },
     completions: attempts.length,
   });

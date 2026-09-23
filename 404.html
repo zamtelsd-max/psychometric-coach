@@ -1,22 +1,22 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"><title>Redirecting…</title>
 <script>
 (function(){
-  var p = location.pathname.replace(/\/+$/,''); // strip trailing slash
+  var p = location.pathname.replace(/\/+$/,'');
   var q = location.search || '';
   var seg = p.split('/').filter(Boolean);
-  function go(base, key){
+  function go(base){
     var id = seg[seg.indexOf(base)+1];
     if(id && id!=='entry'){
+      var key = base==='verify-certificate' ? 'stamp' : 'id';
       var sep = q ? '&' : '?';
-      location.replace('/'+base+'/'+q+sep+key+'='+encodeURIComponent(id));
+      location.replace('/'+base+'/entry/'+q+sep+key+'='+encodeURIComponent(id));
       return true;
     }
     return false;
   }
-  if(seg[0]==='exam' && go('exam','id')) {}
-  else if(seg[0]==='verify-certificate' && go('verify-certificate','stamp')) {}
-  else if(seg[0]==='screening' && seg[1] && seg[1]!=='entry'){ location.replace('/screening/'+ (q||'?') + (q?'&':'') +'id='+encodeURIComponent(seg[1])); }
+  if(seg[0]==='exam' && go('exam')) {}
+  else if(seg[0]==='verify-certificate' && go('verify-certificate')) {}
+  else if(seg[0]==='screening' && seg[1] && seg[1]!=='entry'){ location.replace('/screening/entry/'+(q||'?')+(q?'&':'')+'id='+encodeURIComponent(seg[1])); }
   else { location.replace('/'); }
 })();
-</script>
-</head><body>Redirecting…</body></html>
+</script></head><body>Redirecting…</body></html>

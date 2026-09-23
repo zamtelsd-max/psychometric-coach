@@ -131,7 +131,7 @@ router.post('/sessions', authenticate, async (req: AuthRequest, res: Response): 
         accessToken, trackTitle, questions: { create: qData },
       },
     });
-    const link = `https://www.psychometriccoach.com/exam/${session.id}?t=${accessToken}`;
+    const link = `https://www.psychometriccoach.com/exam/?id=${session.id}&t=${accessToken}`;
     res.json({ success: true, sessionId: session.id, accessToken, examLink: link, totalQuestions: QUESTIONS_PER_EXAM });
   } catch (e) { console.error('session create', e); res.status(500).json({ error: 'failed' }); }
 });
@@ -223,7 +223,7 @@ router.post('/exam/:id/finalize', async (req: Request, res: Response): Promise<v
     res.json({
       success: true, grade, passed: grade >= CERT_PASS_BOUNDARY, passBoundary: CERT_PASS_BOUNDARY,
       skillGaps, upskillingRecommended: skillGaps.length > 0,
-      certificate: certificate ? { id: certificate.id, confirmationStamp: certificate.confirmationStamp, verifyUrl: `https://www.psychometriccoach.com/verify-certificate/${certificate.confirmationStamp}` } : null,
+      certificate: certificate ? { id: certificate.id, confirmationStamp: certificate.confirmationStamp, verifyUrl: `https://www.psychometriccoach.com/verify-certificate/?stamp=${certificate.confirmationStamp}` } : null,
     });
   } catch (e) { console.error('finalize', e); res.status(500).json({ error: 'failed' }); }
 });

@@ -10,9 +10,11 @@ export default function VerifyClient() {
   const [cert, setCert] = useState<any>(null);
 
   useEffect(() => {
+    const qs = new URLSearchParams(window.location.search);
     const parts = window.location.pathname.split('/').filter(Boolean);
-    const stamp = parts[parts.indexOf('verify-certificate') + 1] || '';
-    if (!stamp || stamp === 'entry') { setState('invalid'); return; }
+    const pathSeg = parts[parts.indexOf('verify-certificate') + 1] || '';
+    const stamp = qs.get('stamp') || (pathSeg && pathSeg !== 'entry' ? pathSeg : '');
+    if (!stamp) { setState('invalid'); return; }
     fetch(`${API}/enterprise-v2/verify-certificate/${encodeURIComponent(stamp)}`)
       .then(r => r.json())
       .then(d => { if (d.valid) { setCert(d.certificate); setState('valid'); } else setState('invalid'); })

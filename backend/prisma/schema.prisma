@@ -785,3 +785,135 @@ model PromoBanner {
   @@map("promo_banners")
   @@schema("pc")
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// ENTERPRISE BLUEPRINT v4.0 — B2B Workforce Assessment Ecosystem
+// (100-Q adaptive sim, passive telemetry, corporate reports, certificates)
+// ════════════════════════════════════════════════════════════════════════════
+
+model EnterpriseOrg {
+  id           String              @id @default(cuid())
+  companyName  String
+  ownerEmail   String
+  licenseTier  String              @default("Enterprise Premium")
+  createdAt    DateTime            @default(now())
+  sessions     CandidateSession[]
+  reports      CorporateTalentReport[]
+
+  @@map("enterprise_orgs")
+  @@schema("pc")
+}
+
+model CandidateSession {
+  id                   String                  @id @default(cuid())
+  orgId                String
+  org                  EnterpriseOrg           @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  candidateName        String                  @default("")
+  candidateEmail       String                  @default("")
+  targetDepartment     String
+  targetTier           String                  // Operations | Mid Management | Senior Management | Executive
+  industryField        String                  @default("General")
+  accessToken          String                  @unique
+  currentQuestionIndex Int                     @default(1)
+  isFinalized          Boolean                 @default(false)
+  rawScore             Decimal                 @db.Decimal(5, 2) @default(0.00)
+  trackTitle           String                  @default("")
+  questions            SessionQuestion[]
+  telemetry            PassiveInteractionLog[]
+  certificate          Certificate?
+  createdAt            DateTime                @default(now())
+  startedAt            DateTime?
+  finalizedAt          DateTime?
+
+  @@index([accessToken])
+  @@index([orgId])
+  @@map("candidate_sessions")
+  @@schema("pc")
+}
+
+model SessionQuestion {
+  id            String           @id @default(cuid())
+  sessionId     String
+  session       CandidateSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  ordinal       Int
+  block         Int              @default(1) // block of 10 (1..10)
+  scenario      String           // situational scenario text
+  options       Json             // [{key,label}]
+  correctKey    String           @default("")
+  competency    String           @default("General")
+  riskFactor    String           @default("")
+  answerKey     String?
+  isCorrect     Boolean          @default(false)
+  answeredAt    DateTime?
+
+  @@index([sessionId])
+  @@map("session_questions")
+  @@schema("pc")
+}
+
+model PassiveInteractionLog {
+  id                        String           @id @default(cuid())
+  sessionId                 String
+  session                   CandidateSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questionNumber            Int
+  timeToFirstClickMs        Int              @default(0)
+  totalDwellTimeMs          Int              @default(0)
+  toggleCount               Int              @default(0)
+  readingCadenceCharsPerSec Decimal?         @db.Decimal(6, 2)
+  erraticCursorSpam         Boolean          @default(false)
+  viewportFocusLossCounter  Int              @default(0)
+  purged                    Boolean          @default(false) // GDPR: raw purged after 24h
+  capturedAt                DateTime         @default(now())
+
+  @@index([sessionId])
+  @@index([capturedAt])
+  @@map("passive_interaction_logs")
+  @@schema("pc")
+}
+
+model CorporateTalentReport {
+  id                          String        @id @default(cuid())
+  orgId                       String
+  org                         EnterpriseOrg @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  departmentKey               String
+  aggregateCompetenceAvg      Decimal?      @db.Decimal(5, 2)
+  projectedProductivityLossPct Decimal?     @db.Decimal(4, 2)
+  burnoutRiskIndicator        String        @default("LOW")
+  behavioralArchetype         String        @default("")
+  skillGaps                   Json?
+  compiledAt                  DateTime      @default(now())
+
+  @@index([orgId])
+  @@map("corporate_talent_reports")
+  @@schema("pc")
+}
+
+model Certificate {
+  id             String           @id @default(cuid())
+  sessionId      String           @unique
+  session        CandidateSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  candidateName  String
+  trackTitle     String
+  finalGrade     Decimal          @db.Decimal(5, 2)
+  confirmationStamp String        @unique // Base-62
+  ledgerHash     String           @unique // idempotent guard
+  issuedAt       DateTime         @default(now())
+
+  @@index([confirmationStamp])
+  @@map("certificates")
+  @@schema("pc")
+}
+
+model TrainingRequest {
+  id            String   @id @default(cuid())
+  orgId         String
+  departmentKey String   @default("")
+  requestedBy   String
+  skillGapData  Json
+  status        String   @default("submitted") // submitted | in_review | fulfilled
+  createdAt     DateTime @default(now())
+
+  @@index([orgId])
+  @@map("training_requests")
+  @@schema("pc")
+}

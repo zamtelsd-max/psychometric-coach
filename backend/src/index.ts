@@ -27,6 +27,7 @@ import learningRoutes from './routes/learning';
 import platformRoutes from './routes/platform';
 import employerRoutes from './routes/employer';
 import testBuilderRoutes from './routes/testBuilder';
+import enterpriseV2Routes, { telemetryRouter, purgeStaleTelemetry } from './routes/enterpriseV2';
 import { startMsrScheduler } from './services/msr';
 import logger from './lib/logger';
 
@@ -132,6 +133,13 @@ app.use('/api/v1/ads',        adServedLimiter, adsRoutes);
 app.use('/api/support',       supportRoutes);
 app.use('/api/v1/enterprise', enterpriseRoutes);
 app.use('/api/v1/screening',  screeningRoutes);
+// Enterprise Blueprint v4.0 (100-Q sim, telemetry, corporate reports, certificates)
+app.use('/api/v1/enterprise-v2', enterpriseV2Routes);
+// Telemetry ingestion accepts sendBeacon (text/plain) + JSON; parse both.
+app.use('/api/v1/exams', express.text({ type: '*/*', limit: '256kb' }), telemetryRouter);
+
+// §5.2 GDPR: purge raw interaction logs older than 24h (runs hourly)
+setInterval(() => { purgeStaleTelemetry().then(n => { if (n) logger.info(`Purged ${n} stale telemetry logs`); }).catch(() => {}); }, 60 * 60 * 1000);
 
 // ── 404 ──────────────────────────────────────────────────────────────────────
 app.use((_req, res) => {

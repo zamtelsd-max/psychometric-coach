@@ -131,7 +131,7 @@ router.post('/sessions', authenticate, async (req: AuthRequest, res: Response): 
         accessToken, trackTitle, questions: { create: qData },
       },
     });
-    const link = `https://www.psychometriccoach.com/exam/entry/?id=${session.id}&t=${accessToken}`;
+    const link = `https://www.psychometriccoach.com/exam/entry/?k=${session.id}.${accessToken}`;
     res.json({ success: true, sessionId: session.id, accessToken, examLink: link, totalQuestions: QUESTIONS_PER_EXAM });
   } catch (e) { console.error('session create', e); res.status(500).json({ error: 'failed' }); }
 });

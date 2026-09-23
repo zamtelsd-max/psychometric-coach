@@ -66,13 +66,22 @@ export default function ExamClient() {
   const fetchBlock = useCallback((block: number, t: string) => fetchBlockFor(id, block, t), [fetchBlockFor, id]);
 
   useEffect(() => {
-    // resolve id from ?id= query (SPA-safe on static hosting), else from /exam/<id> path
+    // resolve id + token. Prefer a single combined param ?k=<id>.<token> (no '&', unbreakable
+    // when links are pasted into chat/address bars), else ?id=&t=, else /exam/<id> path.
     const qs = new URLSearchParams(window.location.search);
     const parts = window.location.pathname.split('/').filter(Boolean);
     const pathSeg = parts[parts.indexOf('exam') + 1] || '';
-    const pathId = qs.get('id') || (pathSeg && pathSeg !== 'entry' ? pathSeg : '');
+    let pathId = ''; let t = '';
+    const combined = qs.get('k') || '';
+    if (combined && combined.includes('.')) {
+      const dot = combined.indexOf('.');
+      pathId = combined.slice(0, dot);
+      t = combined.slice(dot + 1);
+    } else {
+      pathId = qs.get('id') || (pathSeg && pathSeg !== 'entry' ? pathSeg : '');
+      t = qs.get('t') || '';
+    }
     setId(pathId);
-    const t = qs.get('t') || '';
     setToken(t);
     if (!pathId || pathId === 'entry') { setErr('Missing assessment id.'); setLoading(false); return; }
     (async () => {

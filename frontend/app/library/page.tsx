@@ -1,8 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { questionsApi } from '../lib'api';
-import AdBanner from '../components'AdBanner';
+import { questionsApi } from '../../lib/api';
+import AdBanner from '../../components/AdBanner';
 
 interface Category {
   id: string; name: string; slug: string; icon: string; color: string;

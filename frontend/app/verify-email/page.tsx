@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { authApi } from '../lib'api';
+import { authApi } from '../../lib/api';
 
 function VerifyInner() {
   const params = useSearchParams();

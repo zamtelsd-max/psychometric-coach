@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useAuthStore } from '../store'authStore';
-import { profileApi, attemptsApi } from '../lib'api';
+import { useAuthStore } from '../../store/authStore';
+import { profileApi, attemptsApi } from '../../lib/api';
 
 interface StatRow { categoryName: string; accuracy: number; total: number; avgTime: number; }
 

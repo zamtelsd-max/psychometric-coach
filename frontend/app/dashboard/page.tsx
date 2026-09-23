@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useAuthStore } from '../store'authStore';
-import { profileApi, attemptsApi } from '../lib'api';
-import AdBanner from '../components'AdBanner';
+import { useAuthStore } from '../../store/authStore';
+import { profileApi, attemptsApi } from '../../lib/api';
+import AdBanner from '../../components/AdBanner';
 
 interface ProfileData {
   user: { name: string; readinessScore: number; streakDays: number; plan: string };

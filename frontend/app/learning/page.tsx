@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 
 const BRAND = '#1B365D', GOLD = '#D4AF37';
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://www.psychometriccoach.com/api/v1';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://http--psychometric-api--x7m7kyc8mh8j.code.run/api/v1';
 const hdr = (): Record<string, string> => { const t = localStorage.getItem('psy_token') || ''; return { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` }; };
 
 export default function LearningPage() {

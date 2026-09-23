@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { enterpriseApi } from '../lib'api';
+import { enterpriseApi } from '../../lib/api';
 
 const BRAND = '#1B365D', GOLD = '#D4AF37';
 

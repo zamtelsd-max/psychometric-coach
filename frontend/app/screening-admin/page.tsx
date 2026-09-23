@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { screeningApi, enterpriseApi } from '../lib'api';
+import { screeningApi, enterpriseApi } from '../../lib/api';
 
 const BRAND = '#1B365D', GOLD = '#D4AF37';
 

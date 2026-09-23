@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { authApi } from '../lib'api';
-import { useAuthStore } from '../store'authStore';
+import { authApi } from '../../lib/api';
+import { useAuthStore } from '../../store/authStore';
 
 function getLoginError(raw: string | undefined): { title: string; hint: string; hintLink?: { label: string; href: string } } {
   const msg = (raw || '').toLowerCase();

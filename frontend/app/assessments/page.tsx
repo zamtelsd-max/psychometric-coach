@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { questionsApi } from '../lib'api';
+import { questionsApi } from '../../lib/api';
 
 interface Category {
   id: string; name: string; slug: string; description: string;

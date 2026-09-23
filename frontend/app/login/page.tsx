@@ -102,16 +102,16 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 bg-brand rounded-xl flex items-center justify-center text-white font-black">P</div>
-            <span className="font-bold text-brand text-xl">PsychometricCoach</span>
+        <div className="text-center mb-7">
+          <Link href="/" className="inline-flex items-center gap-2.5 mb-6">
+            <img src="/wanctech-logo.png" alt="" className="w-10 h-10 rounded-xl object-cover shadow-sm" />
+            <span className="font-black text-xl"><span className="text-brand">Psychometric</span><span className="text-gold">Coach</span></span>
           </Link>
-          <h1 className="text-2xl font-black text-gray-900">Welcome back</h1>
-          <p className="text-gray-500 mt-1">Sign in to continue your practice</p>
+          <h1 className="text-2xl font-black text-slate-900">Welcome back</h1>
+          <p className="text-slate-500 mt-1">Sign in to continue your practice</p>
         </div>
 
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+        <div className="pc-card p-8" style={{ boxShadow: 'var(--shadow-md)' }}>
           {/* Error Banner */}
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-5">

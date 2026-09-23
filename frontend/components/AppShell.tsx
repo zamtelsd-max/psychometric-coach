@@ -58,60 +58,68 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   if (!user) return null;
   const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
+  const linkCls = (active: boolean) =>
+    `group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all relative ${
+      active ? 'bg-brand-50 text-brand font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+    }`;
+  const activeBar = (active: boolean) => active ? (
+    <span aria-hidden="true" className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r bg-gold" />
+  ) : null;
 
   return (
     <div className="min-h-screen bg-surface flex">
-      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-gray-100 fixed h-full z-40">
-        <div className="p-6 border-b border-gray-100">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <img src="/wanctech-logo.png" alt="Wanctech IT Solutions" className="w-8 h-8 rounded-lg object-cover" />
-            <span className="font-bold text-brand">PsychometricCoach</span>
+      <aside className="hidden lg:flex flex-col w-64 bg-white border-r fixed h-full z-40" style={{ borderColor: 'var(--line)' }}>
+        <div className="px-5 py-5 border-b" style={{ borderColor: 'var(--line-2)' }}>
+          <Link href="/dashboard" className="flex items-center gap-2.5">
+            <img src="/wanctech-logo.png" alt="Wanctech IT Solutions" className="w-9 h-9 rounded-xl object-cover shadow-sm" />
+            <span className="font-black text-[15px] leading-tight"><span className="text-brand">Psychometric</span><span className="text-gold">Coach</span></span>
           </Link>
         </div>
 
-        <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3 bg-gray-50/60">
-          <div className="w-9 h-9 bg-brand rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">{user.name[0]}</div>
+        <div className="px-4 py-3.5 border-b flex items-center gap-3" style={{ borderColor: 'var(--line-2)', background: 'var(--brand-050)' }}>
+          <div className="w-10 h-10 pc-gradient-brand rounded-full flex items-center justify-center text-white font-bold shrink-0">{user.name[0]?.toUpperCase()}</div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
-            <p className="text-xs text-gray-500 capitalize">{user.plan.toLowerCase()} plan{isAdmin ? ' · admin' : ''}</p>
+            <p className="text-sm font-semibold text-slate-900 truncate">{user.name}</p>
+            <p className="text-xs capitalize"><span className="pc-badge pc-badge-gold">{user.plan.toLowerCase()}</span>{isAdmin ? <span className="pc-badge pc-badge-brand ml-1">admin</span> : null}</p>
           </div>
-          <button onClick={() => { logout(); router.push('/'); }}
-            className="shrink-0 flex items-center gap-1.5 text-sm font-semibold text-gray-700 border border-gray-200 rounded-xl px-3 py-2 hover:border-red-300 hover:bg-red-50 hover:text-error transition-all"
-            aria-label="Sign out">
-            <span aria-hidden="true">⏻</span> Sign out
-          </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-4 overflow-y-auto">
+        <nav className="flex-1 p-3.5 space-y-5 overflow-y-auto" aria-label="Primary">
           {navGroups.map(g => (
             <div key={g.title}>
-              <p className="px-4 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">{g.title}</p>
-              {g.items.map(n => (
-                <Link key={n.href} href={n.href}
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${path.startsWith(n.href) ? 'bg-brand/10 text-brand font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
-                  <span className="text-lg">{n.icon}</span>{n.label}
-                </Link>
-              ))}
+              <p className="px-3.5 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">{g.title}</p>
+              {g.items.map(n => {
+                const active = path.startsWith(n.href);
+                return (
+                  <Link key={n.href} href={n.href} className={linkCls(active)} aria-current={active ? 'page' : undefined}>
+                    {activeBar(active)}<span className="text-lg w-5 text-center" aria-hidden="true">{n.icon}</span>{n.label}
+                  </Link>
+                );
+              })}
             </div>
           ))}
           {isAdmin && (
             <div>
-              <p className="px-4 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">Administration</p>
-              <Link href="/admin" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${path.startsWith('/admin') && !path.startsWith('/admin/cms') && !path.startsWith('/admin/pricing') && !path.startsWith('/admin/competencies') ? 'bg-brand/10 text-brand font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
-                <span className="text-lg">⚙️</span>Admin CMS
-              </Link>
-              {adminLinks.map(n => (
-                <Link key={n.href} href={n.href}
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${path.startsWith(n.href) ? 'bg-brand/10 text-brand font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
-                  <span className="text-lg">{n.icon}</span>{n.label}
-                </Link>
-              ))}
+              <p className="px-3.5 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Administration</p>
+              {(() => { const active = path.startsWith('/admin') && !adminLinks.some(a => path.startsWith(a.href)); return (
+                <Link href="/admin" className={linkCls(active)} aria-current={active ? 'page' : undefined}>
+                  {activeBar(active)}<span className="text-lg w-5 text-center" aria-hidden="true">⚙️</span>Admin CMS
+                </Link>); })()}
+              {adminLinks.map(n => { const active = path.startsWith(n.href); return (
+                <Link key={n.href} href={n.href} className={linkCls(active)} aria-current={active ? 'page' : undefined}>
+                  {activeBar(active)}<span className="text-lg w-5 text-center" aria-hidden="true">{n.icon}</span>{n.label}
+                </Link>); })}
             </div>
           )}
         </nav>
 
-        <div className="p-3 border-t border-gray-100">
-          <AdBanner slot="SIDEBAR" />
+        <div className="p-3 border-t" style={{ borderColor: 'var(--line-2)' }}>
+          <button onClick={() => { logout(); router.push('/'); }}
+            className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-slate-600 border rounded-xl px-3 py-2.5 hover:border-red-300 hover:bg-red-50 hover:text-error transition-all"
+            style={{ borderColor: 'var(--line)' }} aria-label="Sign out">
+            <span aria-hidden="true">⏻</span> Sign out
+          </button>
+          <div className="mt-3"><AdBanner slot="SIDEBAR" /></div>
         </div>
       </aside>
 
@@ -133,15 +141,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <span aria-hidden="true">⏻</span> Sign out
       </button>
 
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 flex items-center justify-around px-2 h-16 safe-area-pb">
-        {mobileItems.map(n => (
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-50 flex items-center justify-around px-2 h-16 safe-area-pb" style={{ borderColor: 'var(--line)', boxShadow: '0 -2px 12px rgba(15,23,42,.06)' }} aria-label="Primary mobile">
+        {mobileItems.map(n => { const active = path.startsWith(n.href); return (
           <Link key={n.href} href={n.href}
-            className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl min-w-[48px] min-h-[48px] justify-center transition-all ${path.startsWith(n.href) ? 'text-brand' : 'text-gray-400'}`}
-            aria-label={n.label}>
-            <span className="text-xl">{n.icon}</span>
-            <span className={`text-[10px] font-medium ${path.startsWith(n.href) ? 'text-brand' : 'text-gray-400'}`}>{n.label}</span>
-          </Link>
-        ))}
+            className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl min-w-[52px] min-h-[48px] justify-center transition-all ${active ? 'text-brand bg-brand-50' : 'text-slate-400'}`}
+            aria-label={n.label} aria-current={active ? 'page' : undefined}>
+            <span className="text-xl" aria-hidden="true">{n.icon}</span>
+            <span className="text-[10px] font-semibold">{n.label}</span>
+          </Link>); })}
       </nav>
     </div>
   );

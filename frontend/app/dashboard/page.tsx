@@ -58,7 +58,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Readiness Score */}
-      <div className="bg-white rounded-2xl p-6 border border-gray-100 mb-4 flex items-center gap-6">
+      <div className="pc-card mb-4 flex items-center gap-6">
         <div className="relative shrink-0">
           <svg width="128" height="128" viewBox="0 0 128 128" aria-label={`Readiness score: ${score}%`}>
             <circle cx="64" cy="64" r="54" fill="none" stroke="#F0F0F0" strokeWidth="12"/>
@@ -113,10 +113,10 @@ export default function DashboardPage() {
           { label: 'Weak Areas', value: profile?.weakCategories?.length ?? 0, icon: '⚠️' },
           { label: 'Plan', value: user?.plan ?? 'FREE', icon: '⭐' },
         ].map(s => (
-          <div key={s.label} className="bg-white rounded-2xl p-4 border border-gray-100 text-center">
-            <div className="text-2xl mb-1">{s.icon}</div>
-            <div className="text-xl font-black text-gray-900">{s.value}</div>
-            <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
+          <div key={s.label} className="pc-stat text-center">
+            <div className="text-2xl mb-1" aria-hidden="true">{s.icon}</div>
+            <div className="pc-stat-num text-xl">{s.value}</div>
+            <div className="pc-stat-label">{s.label}</div>
           </div>
         ))}
       </div>

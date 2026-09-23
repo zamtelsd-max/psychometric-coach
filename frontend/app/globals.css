@@ -1,30 +1,139 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ══════════════════════════════════════════════════════════════════════════
+   PsychometricCoach — Design System v2
+   Accessible (WCAG AA), professional, consistent across the platform.
+   Palette: deep navy (trust) + gold (achievement) + functional accents.
+   ══════════════════════════════════════════════════════════════════════════ */
 :root {
-  --brand: #0A528A;
-  --success: #2E7D32;
-  --error: #D32F2F;
+  /* Brand */
+  --brand:        #16335B;   /* deep navy — primary */
+  --brand-600:    #1B4079;
+  --brand-500:    #245599;
+  --brand-050:    #eef3fb;
+  --gold:         #C99A2E;   /* accessible gold (AA on white for large text/borders) */
+  --gold-600:     #b0851f;
+  --gold-050:     #fbf5e6;
+
+  /* Neutrals */
+  --ink:          #0f172a;   /* slate-900 */
+  --ink-2:        #334155;   /* slate-700 */
+  --muted:        #64748b;   /* slate-500 */
+  --line:         #e6eaf0;
+  --line-2:       #eef1f6;
+  --surface:      #f6f8fc;
+  --card:         #ffffff;
+
+  /* Functional (all AA on white) */
+  --success:      #15803d;
+  --success-050:  #ecfdf3;
+  --warning:      #b45309;
+  --warning-050:  #fff7ed;
+  --error:        #dc2626;
+  --error-050:    #fef2f2;
+  --info:         #0369a1;
+  --info-050:     #eff6ff;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(15,23,42,.06);
+  --shadow:    0 2px 8px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+  --shadow-md: 0 8px 24px rgba(15,23,42,.08);
+  --shadow-lg: 0 18px 48px rgba(15,23,42,.12);
+
+  --radius:    14px;
+  --radius-sm: 10px;
+  --radius-lg: 20px;
 }
 
 * { box-sizing: border-box; }
 
+html { -webkit-text-size-adjust: 100%; }
+
 body {
-  font-family: 'Inter', sans-serif;
-  background: #F8F9FA;
-  color: #1A1A1A;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--surface);
+  color: var(--ink);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  line-height: 1.55;
 }
 
-/* Smooth transitions */
-a, button { transition: all 0.15s ease; }
+/* Readable measure for long-form content (blueprint §6: 80ch max) */
+.prose-measure { max-width: 72ch; }
 
-/* Focus visible */
-:focus-visible { outline: 2px solid #0A528A; outline-offset: 2px; }
+a, button { transition: background-color .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease, transform .1s ease; }
+
+/* Accessible focus ring everywhere */
+:focus-visible { outline: 3px solid rgba(36,85,153,.55); outline-offset: 2px; border-radius: 6px; }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #f1f1f1; }
-::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; border: 2px solid var(--surface); }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ── Reusable component layer ─────────────────────────────────────────────── */
+@layer components {
+  /* Cards */
+  .pc-card {
+    @apply bg-white rounded-2xl border p-6;
+    border-color: var(--line);
+    box-shadow: var(--shadow);
+  }
+  .pc-card-hover { transition: box-shadow .18s ease, transform .18s ease; }
+  .pc-card-hover:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+  /* Buttons */
+  .pc-btn {
+    @apply inline-flex items-center justify-center gap-2 font-semibold rounded-xl px-5 py-2.5 text-sm;
+    min-height: 44px; /* touch target */
+  }
+  .pc-btn-primary { background: var(--brand); color: #fff; }
+  .pc-btn-primary:hover { background: var(--brand-600); box-shadow: var(--shadow-md); }
+  .pc-btn-gold { background: var(--gold); color: #1f2937; }
+  .pc-btn-gold:hover { background: var(--gold-600); color:#fff; }
+  .pc-btn-ghost { background: #fff; color: var(--brand); border: 1px solid var(--line); }
+  .pc-btn-ghost:hover { border-color: var(--brand-500); background: var(--brand-050); }
+  .pc-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* Badges */
+  .pc-badge { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold; }
+  .pc-badge-success { background: var(--success-050); color: var(--success); }
+  .pc-badge-warning { background: var(--warning-050); color: var(--warning); }
+  .pc-badge-error   { background: var(--error-050);   color: var(--error); }
+  .pc-badge-info    { background: var(--info-050);    color: var(--info); }
+  .pc-badge-gold    { background: var(--gold-050);    color: var(--gold-600); }
+  .pc-badge-brand   { background: var(--brand-050);   color: var(--brand); }
+
+  /* Inputs */
+  .pc-input {
+    @apply w-full rounded-xl border px-3.5 py-2.5 text-sm bg-white;
+    border-color: var(--line); color: var(--ink); min-height: 44px;
+  }
+  .pc-input::placeholder { color: #94a3b8; }
+  .pc-input:focus { border-color: var(--brand-500); box-shadow: 0 0 0 3px rgba(36,85,153,.12); outline: none; }
+  .pc-label { @apply block text-sm font-semibold mb-1.5; color: var(--ink-2); }
+
+  /* Page header */
+  .pc-page { @apply max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8; }
+  .pc-h1 { @apply text-2xl sm:text-3xl font-black tracking-tight; color: var(--brand); }
+  .pc-sub { @apply text-sm; color: var(--muted); }
+
+  /* Stat tile */
+  .pc-stat { @apply rounded-2xl border p-5 bg-white; border-color: var(--line); box-shadow: var(--shadow-sm); }
+  .pc-stat-num { @apply text-3xl font-black; color: var(--ink); line-height: 1.1; }
+  .pc-stat-label { @apply text-xs font-semibold uppercase tracking-wide mt-1; color: var(--muted); }
+}
+
+/* Utility helpers */
+.pc-gradient-brand { background: linear-gradient(135deg, var(--brand) 0%, var(--brand-500) 60%, #2f6bbf 100%); }
+.pc-text-gradient { background: linear-gradient(90deg, var(--brand), #2f6bbf); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.safe-area-pb { padding-bottom: env(safe-area-inset-bottom); }
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}

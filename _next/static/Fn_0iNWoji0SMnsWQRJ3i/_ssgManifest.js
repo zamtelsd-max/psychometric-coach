@@ -1,0 +1,1 @@
+self.__SSG_MANIFEST=new Set(["\u002Fexam\u002F[id]","\u002Fscreening\u002F[assessmentId]","\u002Fverify-certificate\u002F[stamp]"]);self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()

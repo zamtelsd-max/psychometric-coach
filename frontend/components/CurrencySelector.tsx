@@ -41,7 +41,7 @@ export default function CurrencySelector() {
                 <span className="text-xs text-gray-400 ml-2">{c.symbol}</span>
               </div>
               <span className="text-xs text-gray-400">{c.name}</span>
-              {c.code === selectedCurrency && <span className="text-[#0A528A] text-sm">✓</span>}
+              {c.code === selectedCurrency && <span className="text-[#245599] text-sm">✓</span>}
             </button>
           ))}
           <div className="border-t border-gray-100 mt-1 px-4 pt-2 pb-1">

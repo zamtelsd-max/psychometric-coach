@@ -124,7 +124,7 @@ export default function AssessmentsPage() {
         </button>
 
         <button onClick={() => setView('level')}
-          className="w-full bg-gradient-to-r from-[#0A528A] to-blue-700 text-white rounded-2xl p-5 text-left shadow-lg hover:shadow-xl transition-all active:scale-98">
+          className="w-full bg-gradient-to-r from-[#245599] to-blue-700 text-white rounded-2xl p-5 text-left shadow-lg hover:shadow-xl transition-all active:scale-98">
           <div className="text-2xl mb-2">🎓</div>
           <div className="font-black text-lg">By Education Level</div>
           <div className="text-sm text-blue-100 mt-1">Secondary · Graduate · Professional</div>

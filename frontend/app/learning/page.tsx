@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
 
-const BRAND = '#1B365D', GOLD = '#D4AF37';
+const BRAND = '#16335B', GOLD = '#E3B84B'; // brighter gold reads AA on dark bg
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://http--psychometric-api--x7m7kyc8mh8j.code.run/api/v1';
-const hdr = (): Record<string, string> => { const t = localStorage.getItem('psy_token') || ''; return { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` }; };
+const hdr = (): Record<string, string> => { const t = (typeof window !== 'undefined' && localStorage.getItem('psy_token')) || ''; return { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` }; };
 
 export default function LearningPage() {
   const [items, setItems] = useState<any[]>([]);

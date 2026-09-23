@@ -33,13 +33,13 @@ export default function MockExamsPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-black text-gray-900 mb-1">Mock Exams</h1>
-      <p className="text-gray-500 text-sm mb-6">Simulate real test conditions with timed, full-length exams.</p>
+    <div className="pc-page max-w-3xl">
+      <h1 className="pc-h1 mb-1">Mock Exams</h1>
+      <p className="pc-sub mb-6">Simulate real test conditions with timed, full-length exams.</p>
 
       {/* Create exam */}
-      <div className="bg-white rounded-2xl p-5 border border-gray-100 mb-5">
-        <h3 className="font-bold text-gray-900 mb-3">Configure New Exam</h3>
+      <div className="pc-card mb-5">
+        <h3 className="font-bold text-slate-900 mb-3">Configure New Exam</h3>
         <p className="text-xs text-gray-500 mb-3">Select categories (select multiple for a mixed exam)</p>
         <div className="flex flex-wrap gap-2 mb-4">
           {cats.map(c => (
@@ -60,14 +60,14 @@ export default function MockExamsPage() {
           ))}
         </div>
         <button onClick={startExam} disabled={selected.length === 0 || starting}
-          className="w-full bg-brand text-white font-bold py-3.5 rounded-xl hover:bg-brand-dark disabled:opacity-40 transition-all text-sm">
+          className="pc-btn pc-btn-primary w-full py-3.5">
           {starting ? 'Starting…' : `Start ${questionCount}-Question Exam →`}
         </button>
       </div>
 
       {/* History */}
-      <div className="bg-white rounded-2xl p-5 border border-gray-100">
-        <h3 className="font-bold text-gray-900 mb-3">Recent Exams</h3>
+      <div className="pc-card">
+        <h3 className="font-bold text-slate-900 mb-3">Recent Exams</h3>
         {loading ? (
           <div className="space-y-2">{[0,1,2].map(i=><div key={i} className="h-14 bg-gray-100 rounded-xl animate-pulse"/>)}</div>
         ) : history.length === 0 ? (

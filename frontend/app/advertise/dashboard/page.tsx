@@ -98,7 +98,7 @@ export default function AdvertiserDashboard() {
 
   if (loading) return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="w-10 h-10 border-4 border-[#0A528A] border-t-transparent rounded-full animate-spin"></div>
+      <div className="w-10 h-10 border-4 border-[#245599] border-t-transparent rounded-full animate-spin"></div>
     </div>
   );
 
@@ -107,7 +107,7 @@ export default function AdvertiserDashboard() {
       {/* Topbar */}
       <nav className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
         <Link href="/advertise" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-[#0A528A] rounded-lg flex items-center justify-center text-white font-black text-sm">P</div>
+          <div className="w-8 h-8 bg-[#245599] rounded-lg flex items-center justify-center text-white font-black text-sm">P</div>
           <span className="font-bold text-gray-800 text-sm hidden sm:block">Advertiser Portal</span>
         </Link>
         <div className="flex items-center gap-4">
@@ -142,12 +142,12 @@ export default function AdvertiserDashboard() {
         {/* Action bar */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-            <button onClick={() => setTab('ads')} className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === 'ads' ? 'bg-white text-[#0A528A] shadow-sm' : 'text-gray-500'}`}>My Ads</button>
-            <button onClick={() => setTab('payments')} className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === 'payments' ? 'bg-white text-[#0A528A] shadow-sm' : 'text-gray-500'}`}>Payments</button>
+            <button onClick={() => setTab('ads')} className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === 'ads' ? 'bg-white text-[#245599] shadow-sm' : 'text-gray-500'}`}>My Ads</button>
+            <button onClick={() => setTab('payments')} className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === 'payments' ? 'bg-white text-[#245599] shadow-sm' : 'text-gray-500'}`}>Payments</button>
           </div>
           <div className="flex gap-2">
             <button onClick={() => setShowPayModal(true)} className="bg-green-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-green-700">💳 Top Up Balance</button>
-            <Link href="/advertise/create-ad" className="bg-[#0A528A] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-blue-900">+ New Ad</Link>
+            <Link href="/advertise/create-ad" className="bg-[#245599] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-blue-900">+ New Ad</Link>
           </div>
         </div>
 
@@ -159,7 +159,7 @@ export default function AdvertiserDashboard() {
                 <div className="text-5xl mb-4">📋</div>
                 <h3 className="font-bold text-gray-900 mb-2">No ads yet</h3>
                 <p className="text-gray-500 text-sm mb-6">Create your first ad to start reaching learners.</p>
-                <Link href="/advertise/create-ad" className="bg-[#0A528A] text-white font-bold px-6 py-3 rounded-xl text-sm">Create Your First Ad →</Link>
+                <Link href="/advertise/create-ad" className="bg-[#245599] text-white font-bold px-6 py-3 rounded-xl text-sm">Create Your First Ad →</Link>
               </div>
             ) : ads.map(ad => (
               <div key={ad.id} className="bg-white rounded-2xl p-5 border border-gray-100">
@@ -204,7 +204,7 @@ export default function AdvertiserDashboard() {
                 <div className="flex gap-2">
                   {['DRAFT', 'REJECTED'].includes(ad.status) && (
                     <button onClick={() => handleSubmitAd(ad.id)} disabled={actionLoading === ad.id}
-                      className="flex-1 bg-[#0A528A] text-white text-xs font-bold py-2.5 rounded-xl hover:bg-blue-900 disabled:opacity-50">
+                      className="flex-1 bg-[#245599] text-white text-xs font-bold py-2.5 rounded-xl hover:bg-blue-900 disabled:opacity-50">
                       {actionLoading === ad.id ? 'Submitting…' : '🚀 Submit for Review'}
                     </button>
                   )}
@@ -225,14 +225,14 @@ export default function AdvertiserDashboard() {
           <div className="space-y-3">
             <div className="bg-white rounded-2xl p-5 border border-gray-100 mb-4">
               <h3 className="font-bold text-gray-900 mb-3">Payment Instructions</h3>
-              <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-4 text-xs text-[#0A528A]">
+              <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-4 text-xs text-[#245599]">
                 <strong>All billing is in USD.</strong> If paying via local bank transfer or mobile money, convert using today's exchange rate. After paying, submit your payment record below with the reference number.
               </div>
-              <p className="text-xs text-gray-500 mb-4">Send proof of payment to <a href="mailto:support@psychometriccoach.com" className="text-[#0A528A]">support@psychometriccoach.com</a>. Balance activated within 24 hours.</p>
+              <p className="text-xs text-gray-500 mb-4">Send proof of payment to <a href="mailto:support@psychometriccoach.com" className="text-[#245599]">support@psychometriccoach.com</a>. Balance activated within 24 hours.</p>
               <div className="grid sm:grid-cols-2 gap-4 mb-4">
                 {PAYMENT_BANKS.map(b => (
                   <div key={b.name} className="bg-blue-50 rounded-xl p-3">
-                    <p className="font-semibold text-[#0A528A] text-sm">{b.name}</p>
+                    <p className="font-semibold text-[#245599] text-sm">{b.name}</p>
                     <p className="text-xs text-gray-600 mt-1">A/C: <span className="font-mono font-bold">{b.acc}</span></p>
                     <p className="text-xs text-gray-500">{b.branch}</p>
                   </div>
@@ -265,7 +265,7 @@ export default function AdvertiserDashboard() {
                       <div className="relative">
                         <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">$</span>
                         <input type="number" min="10" step="1" value={payForm.amount} onChange={e => setPayForm(f => ({ ...f, amount: e.target.value }))}
-                          className="w-full border border-gray-200 rounded-xl pl-6 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A528A]/30 focus:border-[#0A528A]"
+                          className="w-full border border-gray-200 rounded-xl pl-6 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#245599]/30 focus:border-[#245599]"
                           placeholder="25" required />
                       </div>
                       {Number(payForm.amount) > 0 && currency.code !== 'USD' && (
@@ -275,7 +275,7 @@ export default function AdvertiserDashboard() {
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-1">Method *</label>
                       <select value={payForm.method} onChange={e => setPayForm(f => ({ ...f, method: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A528A]/30 focus:border-[#0A528A]">
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#245599]/30 focus:border-[#245599]">
                         <option value="BANK_TRANSFER">Bank Transfer</option>
                         <option value="MOBILE_MONEY">Mobile Money</option>
                         <option value="CARD">Card</option>
@@ -285,13 +285,13 @@ export default function AdvertiserDashboard() {
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">Reference / Transaction ID</label>
                     <input value={payForm.reference} onChange={e => setPayForm(f => ({ ...f, reference: e.target.value }))}
-                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A528A]/30 focus:border-[#0A528A]"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#245599]/30 focus:border-[#245599]"
                       placeholder="e.g. TXN123456" />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">Notes (optional)</label>
                     <textarea value={payForm.notes} onChange={e => setPayForm(f => ({ ...f, notes: e.target.value }))}
-                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A528A]/30 focus:border-[#0A528A]"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#245599]/30 focus:border-[#245599]"
                       rows={2} placeholder="Any additional info" />
                   </div>
                   <button type="submit" disabled={payLoading || !payForm.amount}

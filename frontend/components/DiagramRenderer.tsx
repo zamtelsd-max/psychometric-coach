@@ -48,7 +48,7 @@ export default function DiagramRenderer({ data }: { data: DiagramData }) {
       labels: data.labels ?? [],
       datasets: [{
         data: data.values ?? [],
-        backgroundColor: data.colors ?? ['#0A528A','#E4007C','#00843D','#F39C12','#8E44AD','#E74C3C','#2ECC71'],
+        backgroundColor: data.colors ?? ['#245599','#E4007C','#00843D','#F39C12','#8E44AD','#E74C3C','#2ECC71'],
         borderWidth: 2,
         borderColor: '#fff',
       }],
@@ -134,7 +134,7 @@ export default function DiagramRenderer({ data }: { data: DiagramData }) {
           <thead>
             <tr>
               {(data.headers ?? []).map((h, i) => (
-                <th key={i} className="bg-[#0A528A] text-white px-3 py-2 font-semibold whitespace-nowrap">{h}</th>
+                <th key={i} className="bg-[#245599] text-white px-3 py-2 font-semibold whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
@@ -147,7 +147,7 @@ export default function DiagramRenderer({ data }: { data: DiagramData }) {
               }>
                 {row.map((cell, ci) => (
                   <td key={ci} className={`px-3 py-2 border-b border-slate-100 ${
-                    data.highlightCol === ci ? 'font-bold text-[#0A528A]' : ''
+                    data.highlightCol === ci ? 'font-bold text-[#245599]' : ''
                   }`}>
                     {cell}
                   </td>
@@ -163,9 +163,9 @@ export default function DiagramRenderer({ data }: { data: DiagramData }) {
   // ── READING PASSAGE ────────────────────────────────────────────────────────
   if (data.type === 'passage') {
     return (
-      <div className="bg-blue-50 border-l-4 border-[#0A528A] rounded-xl p-4 mb-4">
+      <div className="bg-blue-50 border-l-4 border-[#245599] rounded-xl p-4 mb-4">
         {data.title && (
-          <p className="text-xs font-bold text-[#0A528A] uppercase tracking-wide mb-2">{data.title}</p>
+          <p className="text-xs font-bold text-[#245599] uppercase tracking-wide mb-2">{data.title}</p>
         )}
         <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{data.text}</div>
       </div>

@@ -125,10 +125,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       <main className="flex-1 lg:ml-64 pb-20 lg:pb-0 min-h-screen">
         {promo && (
-          <div className="flex items-center justify-center gap-3 px-4 py-2 text-sm font-semibold" style={{ background: 'linear-gradient(90deg,#1B365D,#0A528A)', color: '#fff' }}>
-            <span style={{ color: '#D4AF37' }}>📣</span>
+          <div className="flex items-center justify-center gap-3 px-4 py-2 text-sm font-semibold" style={{ background: 'linear-gradient(90deg,#16335B,#245599)', color: '#fff' }}>
+            <span style={{ color: '#C99A2E' }}>📣</span>
             <span>{promo.message}</span>
-            {promo.ctaText ? <a href={promo.ctaUrl || '#'} className="underline font-bold" style={{ color: '#D4AF37' }}>{promo.ctaText}</a> : null}
+            {promo.ctaText ? <a href={promo.ctaUrl || '#'} className="underline font-bold" style={{ color: '#C99A2E' }}>{promo.ctaText}</a> : null}
           </div>
         )}
         <div className="lg:hidden px-3 pt-3"><AdBanner slot="FOOTER_BANNER" /></div>

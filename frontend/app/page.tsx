@@ -64,17 +64,17 @@ function InterviewAdCarousel() {
     <div className="max-w-xl mx-auto mb-8">
       <div className="rounded-2xl p-5 sm:p-6" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(212,175,55,.35)' }}>
         <div className="flex items-center gap-3 mb-3">
-          <img src={`/panelists/${a.avatar}`} alt={a.role} className="rounded-full" style={{ width: 52, height: 52, border: '2.5px solid #D4AF37' }} />
+          <img src={`/panelists/${a.avatar}`} alt={a.role} className="rounded-full" style={{ width: 52, height: 52, border: '2.5px solid #C99A2E' }} />
           <div className="text-left">
-            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: '#D4AF37', color: '#1B365D' }}>{a.label}</span>
+            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: '#C99A2E', color: '#16335B' }}>{a.label}</span>
             <p className="text-white/70 text-xs mt-1">{a.role} asks…</p>
           </div>
         </div>
         <div className="bg-white text-left rounded-xl p-4 min-h-[76px]" style={{ color: '#212529' }}>
-          <p className="font-semibold" style={{ fontSize: 16, lineHeight: 1.45 }}>{typed}<span style={{ color: '#D4AF37' }}>▌</span></p>
+          <p className="font-semibold" style={{ fontSize: 16, lineHeight: 1.45 }}>{typed}<span style={{ color: '#C99A2E' }}>▌</span></p>
         </div>
         <div className="flex justify-center gap-1.5 mt-4">
-          {ADS.map((_, k) => <span key={k} style={{ width: k === i ? 22 : 7, height: 7, borderRadius: 20, background: k === i ? '#D4AF37' : 'rgba(255,255,255,.3)', transition: 'all .3s' }} />)}
+          {ADS.map((_, k) => <span key={k} style={{ width: k === i ? 22 : 7, height: 7, borderRadius: 20, background: k === i ? '#C99A2E' : 'rgba(255,255,255,.3)', transition: 'all .3s' }} />)}
         </div>
       </div>
     </div>
@@ -484,10 +484,10 @@ export default function LandingPage() {
       </section>
 
       {/* ⭐ VIRTUAL INTERVIEW PANEL — flagship feature showcase */}
-      <section className="py-16 px-4" style={{ background: 'linear-gradient(160deg,#1B365D 0%,#12233f 100%)' }}>
+      <section className="py-16 px-4" style={{ background: 'linear-gradient(160deg,#16335B 0%,#12233f 100%)' }}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10">
-            <span className="inline-block text-[11px] font-black uppercase tracking-widest px-3 py-1 rounded-full mb-4" style={{ background:'#D4AF37', color:'#1B365D' }}>New · AI Interview Coach</span>
+            <span className="inline-block text-[11px] font-black uppercase tracking-widest px-3 py-1 rounded-full mb-4" style={{ background:'#C99A2E', color:'#16335B' }}>New · AI Interview Coach</span>
             <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">Meet Your Virtual Interview Panel 🎤</h2>
             <p className="text-blue-50/80 max-w-2xl mx-auto">Face four AI interviewers in a realistic panel — answer by voice or text and get instant STAR-based scoring and coaching. The most realistic interview practice anywhere.</p>
           </div>
@@ -495,7 +495,7 @@ export default function LandingPage() {
             {[['tech_lead','Technical Lead'],['hr_manager','HR & Culture'],['product_manager','Product Manager'],['exec_director','Exec Director']].map(([a,label],i)=>(
               <div key={a} className="text-center" style={{ transform: i===1||i===2?'translateY(-10px)':'none' }}>
                 <img src={`/panelists/${a}.jpg`} alt={label} className="rounded-full mx-auto"
-                  style={{ width: 'clamp(56px,15vw,96px)', height: 'clamp(56px,15vw,96px)', border:'3px solid #D4AF37', boxShadow:'0 8px 24px rgba(0,0,0,.3)' }} />
+                  style={{ width: 'clamp(56px,15vw,96px)', height: 'clamp(56px,15vw,96px)', border:'3px solid #C99A2E', boxShadow:'0 8px 24px rgba(0,0,0,.3)' }} />
                 <p className="text-white text-[10px] sm:text-xs font-bold mt-2">{label}</p>
               </div>
             ))}
@@ -505,7 +505,7 @@ export default function LandingPage() {
           <InterviewAdCarousel />
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/register" className="font-bold px-8 py-4 rounded-2xl text-lg text-center transition-all hover:scale-105" style={{ background:'#D4AF37', color:'#1B365D' }}>Try the Interview Panel →</Link>
+            <Link href="/register" className="font-bold px-8 py-4 rounded-2xl text-lg text-center transition-all hover:scale-105" style={{ background:'#C99A2E', color:'#16335B' }}>Try the Interview Panel →</Link>
             <Link href="/login" className="border-2 border-white/40 text-white font-semibold px-8 py-4 rounded-2xl text-lg text-center hover:bg-white/10">Sign In</Link>
           </div>
         </div>

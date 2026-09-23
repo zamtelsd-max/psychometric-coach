@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { enterpriseApi } from '../../lib/api';
 
-const BRAND = '#1B365D', GOLD = '#D4AF37';
+const BRAND = '#16335B', GOLD = '#C99A2E';
 
 export default function MatcherPage() {
   const router = useRouter();

@@ -87,20 +87,20 @@ export default function RegisterPage() {
 
   if (verifySent) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'linear-gradient(160deg,#1B365D 0%,#12233f 100%)' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'linear-gradient(160deg,#16335B 0%,#12233f 100%)' }}>
         <div style={{ maxWidth: 460, width: '100%', background: '#fff', borderRadius: 18, padding: 36, textAlign: 'center' }}>
           <div style={{ fontSize: 54 }}>📧</div>
-          <h1 style={{ fontSize: 24, fontWeight: 900, color: '#1B365D', margin: '10px 0 8px' }}>Verify your email</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 900, color: '#16335B', margin: '10px 0 8px' }}>Verify your email</h1>
           <p style={{ color: '#475569', fontSize: 15, lineHeight: 1.55 }}>
             We&apos;ve sent a verification link to <b>{form.email}</b>. Click the link in that email to activate your account, then sign in.
           </p>
           <p style={{ color: '#94a3b8', fontSize: 13, marginTop: 12 }}>Can&apos;t find it? Check your spam folder.</p>
           <button
             onClick={async () => { try { await authApi.resendVerification(form.email); setResent(true); } catch { setResent(true); } }}
-            style={{ marginTop: 18, background: '#D4AF37', color: '#1B365D', fontWeight: 800, border: 'none', padding: '11px 20px', borderRadius: 10, cursor: 'pointer', width: '100%' }}>
+            style={{ marginTop: 18, background: '#C99A2E', color: '#16335B', fontWeight: 800, border: 'none', padding: '11px 20px', borderRadius: 10, cursor: 'pointer', width: '100%' }}>
             {resent ? 'Verification email re-sent ✓' : 'Resend verification email'}
           </button>
-          <button onClick={() => router.push('/login')} style={{ marginTop: 10, background: 'transparent', color: '#1B365D', fontWeight: 700, border: '1px solid #1B365D', padding: '11px 20px', borderRadius: 10, cursor: 'pointer', width: '100%' }}>
+          <button onClick={() => router.push('/login')} style={{ marginTop: 10, background: 'transparent', color: '#16335B', fontWeight: 700, border: '1px solid #16335B', padding: '11px 20px', borderRadius: 10, cursor: 'pointer', width: '100%' }}>
             Go to sign in
           </button>
         </div>

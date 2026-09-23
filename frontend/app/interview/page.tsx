@@ -6,7 +6,7 @@ import { interviewApi } from '@/lib/api';
 interface Panelist { archetype: string; name: string; role: string; avatar: string; focus: string; }
 interface Question { panelist: Panelist; round: number; questionNumber: number; questionInRound: number; questionId: string; questionText: string; expectedKeywords?: string; }
 
-const NAVY = '#1B365D', GOLD = '#D4AF37', INK = '#212529', BG = '#F8F9FA';
+const NAVY = '#16335B', GOLD = '#C99A2E', INK = '#0f172a', BG = '#f6f8fc';
 
 // Cartoon avatar image per archetype
 const AVATAR: Record<string, string> = {

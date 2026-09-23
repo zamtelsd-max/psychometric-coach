@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { screeningApi, enterpriseApi } from '../../lib/api';
 
-const BRAND = '#1B365D', GOLD = '#D4AF37';
+const BRAND = '#16335B', GOLD = '#C99A2E';
 
 export default function ScreeningAdminPage() {
   const [list, setList] = useState<any[]>([]);

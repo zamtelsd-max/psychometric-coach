@@ -73,20 +73,20 @@ export default function CreateAdPage() {
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1.5">Campaign Name * <span className="font-normal text-gray-400">(internal only)</span></label>
                   <input value={form.title} onChange={e => set('title', e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A528A]/30 focus:border-[#0A528A]"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#245599]/30 focus:border-[#245599]"
                     placeholder="e.g. Q3 Brand Campaign" required />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1.5">Headline * <span className="font-normal text-gray-400">(max 80 chars)</span></label>
                   <input value={form.headline} onChange={e => set('headline', e.target.value)} maxLength={80}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A528A]/30 focus:border-[#0A528A]"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#245599]/30 focus:border-[#245599]"
                     placeholder="e.g. Unlock Your Career Potential with Zanaco" required />
                   <p className="text-[10px] text-gray-400 mt-1">{form.headline.length}/80</p>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1.5">Body Text * <span className="font-normal text-gray-400">(max 200 chars)</span></label>
                   <textarea value={form.bodyText} onChange={e => set('bodyText', e.target.value)} maxLength={200} rows={3}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A528A]/30 focus:border-[#0A528A]"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#245599]/30 focus:border-[#245599]"
                     placeholder="e.g. Open a Zanaco account today and get competitive interest rates plus exclusive benefits for young professionals." required />
                   <p className="text-[10px] text-gray-400 mt-1">{form.bodyText.length}/200</p>
                 </div>
@@ -94,20 +94,20 @@ export default function CreateAdPage() {
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1.5">CTA Button Text</label>
                     <input value={form.ctaText} onChange={e => set('ctaText', e.target.value)} maxLength={30}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A528A]/30 focus:border-[#0A528A]"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#245599]/30 focus:border-[#245599]"
                       placeholder="Learn More" />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1.5">Destination URL *</label>
                     <input type="url" value={form.ctaUrl} onChange={e => set('ctaUrl', e.target.value)}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A528A]/30 focus:border-[#0A528A]"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#245599]/30 focus:border-[#245599]"
                       placeholder="https://..." required />
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1.5">Image URL <span className="font-normal text-gray-400">(optional, recommended)</span></label>
                   <input type="url" value={form.imageUrl} onChange={e => set('imageUrl', e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A528A]/30 focus:border-[#0A528A]"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#245599]/30 focus:border-[#245599]"
                     placeholder="https://your-cdn.com/banner.jpg" />
                   <p className="text-[10px] text-gray-400 mt-1">Recommended: 800×400px JPEG/PNG · max 2MB · host on your own CDN or Cloudinary</p>
                 </div>
@@ -124,17 +124,17 @@ export default function CreateAdPage() {
                   { value: 'IN_FEED',       label: '📋 In-Feed',       desc: 'Between content cards · Native feel' },
                   { value: 'FOOTER_BANNER', label: '📍 Footer Banner', desc: 'Bottom of page · Broad reach' },
                 ].map(s => (
-                  <label key={s.value} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${form.slot === s.value ? 'border-[#0A528A] bg-blue-50' : 'border-gray-100 hover:border-gray-200'}`}>
+                  <label key={s.value} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${form.slot === s.value ? 'border-[#245599] bg-blue-50' : 'border-gray-100 hover:border-gray-200'}`}>
                     <input type="radio" name="slot" value={s.value} checked={form.slot === s.value} onChange={e => set('slot', e.target.value)} className="sr-only" />
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-gray-900">{s.label}</p>
                       <p className="text-xs text-gray-500">{s.desc}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-bold text-[#0A528A]">{format(SLOT_CPM[s.value])}</p>
+                      <p className="text-sm font-bold text-[#245599]">{format(SLOT_CPM[s.value])}</p>
                       <p className="text-[10px] text-gray-400">per 1,000 imp</p>
                     </div>
-                    {form.slot === s.value && <span className="text-[#0A528A] text-lg ml-1">✓</span>}
+                    {form.slot === s.value && <span className="text-[#245599] text-lg ml-1">✓</span>}
                   </label>
                 ))}
               </div>
@@ -148,11 +148,11 @@ export default function CreateAdPage() {
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">$</span>
                   <input type="number" min="10" step="1" value={form.budget} onChange={e => set('budget', e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl pl-7 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A528A]/30 focus:border-[#0A528A]" required />
+                    className="w-full border border-gray-200 rounded-xl pl-7 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#245599]/30 focus:border-[#245599]" required />
                 </div>
                 {Number(form.budget) > 0 && (
                   <div className="mt-1.5 text-xs space-y-0.5">
-                    <p className="text-[#0A528A] font-semibold">≈ {ESTIMATED_IMPRESSIONS.toLocaleString()} estimated impressions</p>
+                    <p className="text-[#245599] font-semibold">≈ {ESTIMATED_IMPRESSIONS.toLocaleString()} estimated impressions</p>
                     <p className="text-gray-400">≈ {format(Number(form.budget))} {currency.code !== 'USD' ? `(at today's rate)` : ''}</p>
                   </div>
                 )}
@@ -161,19 +161,19 @@ export default function CreateAdPage() {
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1.5">Start Date</label>
                   <input type="date" value={form.startDate} onChange={e => set('startDate', e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A528A]/30 focus:border-[#0A528A]" />
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#245599]/30 focus:border-[#245599]" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1.5">End Date</label>
                   <input type="date" value={form.endDate} onChange={e => set('endDate', e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A528A]/30 focus:border-[#0A528A]" />
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#245599]/30 focus:border-[#245599]" />
                 </div>
               </div>
               <p className="text-xs text-gray-400 mt-2">Leave dates blank to run until budget is exhausted.</p>
             </div>
 
             <button onClick={submit} disabled={loading}
-              className="w-full bg-[#0A528A] text-white font-bold py-4 rounded-2xl hover:bg-blue-900 disabled:opacity-50 transition-all text-base">
+              className="w-full bg-[#245599] text-white font-bold py-4 rounded-2xl hover:bg-blue-900 disabled:opacity-50 transition-all text-base">
               {loading ? 'Saving…' : 'Save Ad as Draft'}
             </button>
             <p className="text-center text-xs text-gray-400">Your ad is saved as a draft. Submit it for review from the dashboard.</p>
@@ -193,12 +193,12 @@ export default function CreateAdPage() {
                   <p className="text-xs text-gray-500 mb-3 line-clamp-2">{form.bodyText || 'Your description goes here…'}</p>
                   <div className="flex items-center justify-between">
                     <p className="text-[9px] text-gray-400">Ad</p>
-                    <span className="bg-[#0A528A] text-white text-[10px] font-bold px-3 py-1.5 rounded-lg">{form.ctaText || 'Learn More'}</span>
+                    <span className="bg-[#245599] text-white text-[10px] font-bold px-3 py-1.5 rounded-lg">{form.ctaText || 'Learn More'}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-blue-50 rounded-xl p-4 text-xs text-[#0A528A]">
+              <div className="bg-blue-50 rounded-xl p-4 text-xs text-[#245599]">
                 <p className="font-bold mb-2">💡 Tips for great ads:</p>
                 <ul className="space-y-1 text-blue-700">
                   <li>• Keep headlines action-oriented</li>

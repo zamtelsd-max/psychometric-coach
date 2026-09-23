@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 
-const BRAND = '#1B365D', GOLD = '#D4AF37';
+const BRAND = '#16335B', GOLD = '#E3B84B';
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://http--psychometric-api--x7m7kyc8mh8j.code.run/api/v1';
 const fontStack = "Inter, Roboto, system-ui, sans-serif";
 
@@ -19,7 +19,7 @@ export default function VerifyClient() {
       .catch(() => setState('invalid'));
   }, []);
 
-  const wrap: React.CSSProperties = { fontFamily: fontStack, minHeight: '100vh', background: 'linear-gradient(160deg,#1B365D,#12233f)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 };
+  const wrap: React.CSSProperties = { fontFamily: fontStack, minHeight: '100vh', background: 'linear-gradient(160deg,#16335B,#12233f)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 };
   const card: React.CSSProperties = { maxWidth: 560, width: '100%', background: '#fff', borderRadius: 18, padding: 40, textAlign: 'center' };
 
   if (state === 'loading') return <div style={wrap}><div style={card}>Verifying…</div></div>;

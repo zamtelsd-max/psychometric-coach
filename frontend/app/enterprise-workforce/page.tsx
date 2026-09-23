@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 
-const BRAND = '#1B365D', GOLD = '#D4AF37';
+const BRAND = '#16335B', GOLD = '#C99A2E';
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://http--psychometric-api--x7m7kyc8mh8j.code.run/api/v1';
 const fontStack = "Inter, Roboto, system-ui, sans-serif";
 const hdr = (): Record<string, string> => { const t = (typeof window !== 'undefined' && localStorage.getItem('psy_token')) || ''; return { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` }; };

@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { enterpriseApi } from '../../lib/api';
 
-const BRAND = '#1B365D', GOLD = '#D4AF37';
+const BRAND = '#16335B', GOLD = '#C99A2E';
 
 export default function PassportsPage() {
   const [passports, setPassports] = useState<any[]>([]);

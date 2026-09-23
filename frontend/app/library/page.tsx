@@ -21,15 +21,15 @@ export default function LibraryPage() {
   const filtered = cats.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+    <div className="pc-page">
       <div className="mb-6">
-        <h1 className="text-2xl font-black text-gray-900 mb-1">Question Library</h1>
-        <p className="text-gray-500 text-sm">Choose a category to start practising</p>
+        <h1 className="pc-h1 mb-1">Question Library</h1>
+        <p className="pc-sub">Choose a category to start practising · {cats.length} categories</p>
       </div>
 
       <div className="mb-5">
         <input value={search} onChange={e => setSearch(e.target.value)}
-          className="w-full border border-gray-200 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand bg-white"
+          className="pc-input px-5 py-3.5"
           placeholder="🔍  Search categories..." aria-label="Search categories" />
       </div>
 
@@ -43,15 +43,13 @@ export default function LibraryPage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(cat => (
             <Link key={cat.id} href={`/practice?category=${cat.slug}`}
-              className="bg-white rounded-2xl p-5 border border-gray-100 hover:border-brand/30 hover:shadow-md transition-all group">
+              className="pc-card pc-card-hover p-5 group">
               <div className="flex items-start justify-between mb-3">
-                <span className="text-3xl">{cat.icon}</span>
-                <span className="text-xs bg-surface text-gray-500 font-medium px-2.5 py-1 rounded-full">
-                  {cat._count?.questions ?? 0} Q
-                </span>
+                <span className="text-3xl" aria-hidden="true">{cat.icon}</span>
+                <span className="pc-badge pc-badge-brand">{cat._count?.questions ?? 0} Q</span>
               </div>
-              <h3 className="font-bold text-gray-900 group-hover:text-brand text-sm mb-1.5 transition-colors">{cat.name}</h3>
-              <p className="text-xs text-gray-400 leading-relaxed line-clamp-2">{cat.description}</p>
+              <h3 className="font-bold text-slate-900 group-hover:text-brand text-sm mb-1.5 transition-colors">{cat.name}</h3>
+              <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">{cat.description}</p>
               <div className="mt-3 flex items-center text-xs text-brand font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
                 Practice now →
               </div>

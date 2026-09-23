@@ -26,7 +26,7 @@ export default function AdvertisePage() {
       name: 'Growth',
       usdPrice: USD_PRICES.PACKAGE_GROWTH,
       impressions: '40,000',
-      color: '#0A528A',
+      color: '#245599',
       features: ['Banner + In-feed ads', '3 active ads', 'Full analytics dashboard', 'Priority support', 'Category targeting'],
       cta: 'Start Growing',
       popular: true,
@@ -53,32 +53,32 @@ export default function AdvertisePage() {
       {/* Nav */}
       <nav className="border-b border-gray-100 px-6 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-[#0A528A] rounded-lg flex items-center justify-center text-white font-black text-sm">P</div>
-          <span className="font-bold text-[#0A528A] hidden sm:block">PsychometricCoach</span>
+          <div className="w-8 h-8 bg-[#245599] rounded-lg flex items-center justify-center text-white font-black text-sm">P</div>
+          <span className="font-bold text-[#245599] hidden sm:block">PsychometricCoach</span>
         </Link>
         <div className="flex items-center gap-3">
           <CurrencySelector />
-          <Link href="/advertise/login" className="text-sm text-gray-600 hover:text-[#0A528A] font-medium">Sign in</Link>
-          <Link href="/advertise/register" className="bg-[#0A528A] text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-blue-900 transition-all">Advertise Now</Link>
+          <Link href="/advertise/login" className="text-sm text-gray-600 hover:text-[#245599] font-medium">Sign in</Link>
+          <Link href="/advertise/register" className="bg-[#245599] text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-blue-900 transition-all">Advertise Now</Link>
         </div>
       </nav>
 
       {/* Hero */}
       <section className="max-w-5xl mx-auto px-6 py-20 text-center">
-        <div className="inline-flex items-center gap-2 bg-blue-50 text-[#0A528A] text-xs font-bold px-4 py-2 rounded-full mb-6">
+        <div className="inline-flex items-center gap-2 bg-blue-50 text-[#245599] text-xs font-bold px-4 py-2 rounded-full mb-6">
           📣 Reach Zambia's most driven learners
         </div>
         <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-6 leading-tight">
-          Advertise to <span className="text-[#0A528A]">25,000+</span><br />motivated professionals
+          Advertise to <span className="text-[#245599]">25,000+</span><br />motivated professionals
         </h1>
         <p className="text-gray-500 text-lg mb-10 max-w-2xl mx-auto">
           PsychometricCoach is Zambia's leading test prep platform. Put your brand in front of job-seekers, graduates, and professionals actively preparing for career advancement.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/advertise/register" className="bg-[#0A528A] text-white font-bold px-8 py-4 rounded-2xl text-base hover:bg-blue-900 transition-all shadow-lg shadow-blue-900/20">
+          <Link href="/advertise/register" className="bg-[#245599] text-white font-bold px-8 py-4 rounded-2xl text-base hover:bg-blue-900 transition-all shadow-lg shadow-blue-900/20">
             Start Advertising — Free to Sign Up
           </Link>
-          <a href="mailto:support@psychometriccoach.com" className="border border-gray-200 text-gray-700 font-semibold px-8 py-4 rounded-2xl text-base hover:border-[#0A528A] hover:text-[#0A528A] transition-all">
+          <a href="mailto:support@psychometriccoach.com" className="border border-gray-200 text-gray-700 font-semibold px-8 py-4 rounded-2xl text-base hover:border-[#245599] hover:text-[#245599] transition-all">
             Talk to Sales →
           </a>
         </div>
@@ -86,7 +86,7 @@ export default function AdvertisePage() {
       </section>
 
       {/* Stats */}
-      <section className="bg-[#0A528A] py-14">
+      <section className="bg-[#245599] py-14">
         <div className="max-w-4xl mx-auto px-6 grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
           {STATS.map(s => (
             <div key={s.label}>
@@ -136,7 +136,7 @@ export default function AdvertisePage() {
                 <h3 className="font-bold text-gray-900 mb-1">{f.name}</h3>
                 <p className="text-xs text-gray-500 mb-3">{f.desc}</p>
                 <div>
-                  <span className="text-lg font-black text-[#0A528A]">{format(f.usdCpm)}</span>
+                  <span className="text-lg font-black text-[#245599]">{format(f.usdCpm)}</span>
                   <span className="text-xs text-gray-400 ml-1">/ 1,000 impressions</span>
                 </div>
                 <p className="text-[10px] text-gray-400 mt-0.5">(${f.usdCpm} USD)</p>
@@ -158,9 +158,9 @@ export default function AdvertisePage() {
         </div>
         <div className="grid sm:grid-cols-3 gap-6">
           {PACKAGES.map(p => (
-            <div key={p.name} className={`rounded-2xl p-6 border-2 relative ${p.popular ? 'border-[#0A528A] shadow-lg shadow-blue-900/10' : 'border-gray-100'}`}>
+            <div key={p.name} className={`rounded-2xl p-6 border-2 relative ${p.popular ? 'border-[#245599] shadow-lg shadow-blue-900/10' : 'border-gray-100'}`}>
               {p.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#0A528A] text-white text-[10px] font-bold px-3 py-1 rounded-full">Most Popular</div>
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#245599] text-white text-[10px] font-bold px-3 py-1 rounded-full">Most Popular</div>
               )}
               <div className="mb-4">
                 <p className="text-sm font-semibold text-gray-500 mb-1">{p.name}</p>
@@ -189,7 +189,7 @@ export default function AdvertisePage() {
               <Link
                 href={p.name === 'Enterprise' ? 'mailto:support@psychometriccoach.com' : '/advertise/register'}
                 className="block w-full text-center font-bold py-3 rounded-xl transition-all text-sm"
-                style={{ backgroundColor: p.popular ? '#0A528A' : undefined, color: p.popular ? 'white' : p.color, border: p.popular ? 'none' : `2px solid ${p.color}` }}>
+                style={{ backgroundColor: p.popular ? '#245599' : undefined, color: p.popular ? 'white' : p.color, border: p.popular ? 'none' : `2px solid ${p.color}` }}>
                 {p.cta}
               </Link>
             </div>
@@ -212,7 +212,7 @@ export default function AdvertisePage() {
               { step: '4', title: 'Go live', desc: 'Approved ads go live immediately. Track performance in real-time from your dashboard.' },
             ].map(s => (
               <div key={s.step} className="flex gap-4 items-start">
-                <div className="w-10 h-10 bg-[#0A528A] text-white font-black text-sm rounded-full flex items-center justify-center shrink-0">{s.step}</div>
+                <div className="w-10 h-10 bg-[#245599] text-white font-black text-sm rounded-full flex items-center justify-center shrink-0">{s.step}</div>
                 <div>
                   <p className="font-bold text-gray-900">{s.title}</p>
                   <p className="text-sm text-gray-500">{s.desc}</p>
@@ -245,15 +245,15 @@ export default function AdvertisePage() {
       <section className="max-w-3xl mx-auto px-6 py-16 text-center">
         <h2 className="text-3xl font-black text-gray-900 mb-4">Ready to reach Zambia's top talent?</h2>
         <p className="text-gray-500 mb-8">Join businesses advertising on PsychometricCoach today.</p>
-        <Link href="/advertise/register" className="inline-block bg-[#0A528A] text-white font-bold px-10 py-4 rounded-2xl text-base hover:bg-blue-900 transition-all shadow-lg shadow-blue-900/20">
+        <Link href="/advertise/register" className="inline-block bg-[#245599] text-white font-bold px-10 py-4 rounded-2xl text-base hover:bg-blue-900 transition-all shadow-lg shadow-blue-900/20">
           Create Advertiser Account — Free
         </Link>
-        <p className="text-xs text-gray-400 mt-4">Questions? Email <a href="mailto:support@psychometriccoach.com" className="text-[#0A528A]">support@psychometriccoach.com</a></p>
+        <p className="text-xs text-gray-400 mt-4">Questions? Email <a href="mailto:support@psychometriccoach.com" className="text-[#245599]">support@psychometriccoach.com</a></p>
       </section>
 
       {/* Footer */}
       <footer className="border-t border-gray-100 py-8 text-center text-xs text-gray-400">
-        © {new Date().getFullYear()} PsychometricCoach · <Link href="/" className="hover:text-[#0A528A]">Back to site</Link>
+        © {new Date().getFullYear()} PsychometricCoach · <Link href="/" className="hover:text-[#245599]">Back to site</Link>
       </footer>
     </div>
   );

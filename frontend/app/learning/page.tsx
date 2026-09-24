@@ -12,14 +12,25 @@ export default function LearningPage() {
   const [content, setContent] = useState('');
   const [toast, setToast] = useState('');
   const [unlock, setUnlock] = useState<string | null>(null);
+  const [quiz, setQuiz] = useState<any>(null);          // { questions, best, xpEarned }
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [quizResult, setQuizResult] = useState<any>(null);
+  const [quizMode, setQuizMode] = useState(false);
 
   const load = () => fetch(`${API}/learning/feed`, { headers: hdr() }).then(r => r.json()).then(d => { setItems(d.items || []); setGaps(d.gaps || []); }).catch(() => {});
   useEffect(() => { load(); }, []);
 
   const openModule = async (m: any) => {
-    setOpen(m); setContent(''); setUnlock(null);
+    setOpen(m); setContent(''); setUnlock(null); setQuiz(null); setAnswers({}); setQuizResult(null); setQuizMode(false);
     const d = await fetch(`${API}/learning/module/${m.id}`, { headers: hdr() }).then(r => r.json()).catch(() => null);
     if (d?.module) { setContent(d.module.contentHtml); setOpen({ ...m, durationLabel: d.module.durationLabel }); }
+    const q = await fetch(`${API}/learning/module/${m.id}/quiz`, { headers: hdr() }).then(r => r.json()).catch(() => null);
+    if (q?.hasQuiz) setQuiz(q);
+  };
+  const submitQuiz = async () => {
+    if (!open) return;
+    const d = await fetch(`${API}/learning/module/${open.id}/quiz-submit`, { method: 'POST', headers: hdr(), body: JSON.stringify({ answers }) }).then(r => r.json()).catch(() => null);
+    if (d?.ok) { setQuizResult(d); if (d.bonusXp > 0) { setToast(`🎉 +${d.bonusXp} bonus XP from the quiz!`); load(); } }
   };
   const complete = async () => {
     if (!open) return;
@@ -79,6 +90,57 @@ export default function LearningPage() {
                 .growth-content details.quiz summary { cursor:pointer; font-weight:700; color:${GOLD}; }
                 .growth-content details.quiz > div { margin-top:8px; color:#cbd5e1; }
               `}</style>
+              {quiz && (
+                <div style={{ marginTop: 20, borderTop: '1px solid rgba(255,255,255,.1)', paddingTop: 16 }}>
+                  {!quizMode && !quizResult && (
+                    <button onClick={() => setQuizMode(true)} style={{ width: '100%', background: 'rgba(212,175,55,.15)', color: GOLD, border: `1px solid ${GOLD}55`, borderRadius: 12, padding: 14, fontWeight: 800, fontSize: 15, cursor: 'pointer' }}>
+                      🧠 Test yourself ({quiz.questions.length} questions){quiz.best ? ` · best ${quiz.best}%` : ''}{quiz.xpEarned ? ' · XP earned ✓' : ' · +20 XP if you pass'}
+                    </button>
+                  )}
+                  {(quizMode || quizResult) && (
+                    <div>
+                      <h3 style={{ color: '#fff', fontSize: 16, fontWeight: 800, margin: '0 0 12px' }}>🧠 Test yourself</h3>
+                      {quiz.questions.map((q: any) => {
+                        const rev = quizResult?.review?.find((r: any) => r.i === q.i);
+                        return (
+                          <div key={q.i} style={{ marginBottom: 16 }}>
+                            <p style={{ color: '#e2e8f0', fontWeight: 600, fontSize: 14.5, margin: '0 0 8px' }}>{q.i + 1}. {q.q}</p>
+                            {q.options.map((o: any) => {
+                              const chosen = answers[q.i] === o.key;
+                              const isCorrect = rev && o.key === rev.correctKey;
+                              const isWrongChosen = rev && chosen && !rev.correct;
+                              return (
+                                <div key={o.key} onClick={() => { if (!quizResult) setAnswers({ ...answers, [q.i]: o.key }); }}
+                                  style={{ display: 'flex', gap: 8, padding: '9px 12px', marginBottom: 6, borderRadius: 8, cursor: quizResult ? 'default' : 'pointer',
+                                    border: `1.5px solid ${isCorrect ? '#4ade80' : isWrongChosen ? '#f87171' : chosen ? GOLD : 'rgba(255,255,255,.15)'}`,
+                                    background: isCorrect ? 'rgba(74,222,128,.12)' : isWrongChosen ? 'rgba(248,113,113,.12)' : chosen ? 'rgba(212,175,55,.12)' : 'rgba(255,255,255,.03)' }}>
+                                  <b style={{ color: GOLD }}>{o.key}.</b><span style={{ color: '#e2e8f0', flex: 1 }}>{o.label}</span>
+                                  {isCorrect && <span style={{ color: '#4ade80', fontWeight: 800 }}>✓</span>}
+                                  {isWrongChosen && <span style={{ color: '#f87171', fontWeight: 800 }}>✗</span>}
+                                </div>
+                              );
+                            })}
+                            {rev && <p style={{ color: '#94a3b8', fontSize: 12.5, margin: '4px 0 0' }}>{rev.explain}</p>}
+                          </div>
+                        );
+                      })}
+                      {!quizResult ? (
+                        <button onClick={submitQuiz} disabled={Object.keys(answers).length < quiz.questions.length}
+                          style={{ width: '100%', background: Object.keys(answers).length < quiz.questions.length ? '#475569' : GOLD, color: BRAND, border: 'none', borderRadius: 10, padding: 12, fontWeight: 800, fontSize: 15, cursor: Object.keys(answers).length < quiz.questions.length ? 'not-allowed' : 'pointer' }}>
+                          Submit answers
+                        </button>
+                      ) : (
+                        <div style={{ textAlign: 'center', background: quizResult.passed ? 'rgba(74,222,128,.12)' : 'rgba(248,113,113,.10)', borderRadius: 12, padding: 14 }}>
+                          <div style={{ fontSize: 30, fontWeight: 900, color: quizResult.passed ? '#4ade80' : '#f87171' }}>{quizResult.score}%</div>
+                          <p style={{ color: '#e2e8f0', fontSize: 13.5, margin: '4px 0' }}>{quizResult.correct}/{quizResult.total} correct{quizResult.passed ? ' — passed! 🎉' : ' — 80% needed to pass'}{quizResult.bonusXp ? ` · +${quizResult.bonusXp} XP` : ''}</p>
+                          {!quizResult.passed && <button onClick={() => { setAnswers({}); setQuizResult(null); }} style={{ marginTop: 8, background: 'rgba(255,255,255,.1)', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 18px', fontWeight: 700, cursor: 'pointer' }}>Try again</button>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {unlock && (
                 <div style={{ marginTop: 16, background: 'rgba(74,222,128,.12)', border: '1px solid rgba(74,222,128,.4)', borderRadius: 12, padding: 14 }}>
                   <b style={{ color: '#4ade80' }}>🎓 Certification exam unlocked: {unlock}</b>

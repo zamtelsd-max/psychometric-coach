@@ -41,6 +41,24 @@ router.post('/module/:id/complete', authenticate, async (req: AuthRequest, res: 
   res.json({ ok: true, xpAwarded: isNew ? (m.format === 'COURSE' ? 60 : 25) : 0, examUnlocked, examCourseId: examUnlocked ? m.tags[0] : undefined });
 });
 
+// GET /api/v1/learning/stats — learner progress summary for the dashboard
+router.get('/stats', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
+  const uid = req.user!.id;
+  const totalModules = await prisma.learningModule.count({ where: { isActive: true } });
+  const comps = await prisma.moduleCompletion.findMany({ where: { userId: uid } });
+  const withQuiz = comps.filter(c => c.quizBest > 0);
+  const quizAvg = withQuiz.length ? Math.round(withQuiz.reduce((s, c) => s + c.quizBest, 0) / withQuiz.length) : 0;
+  const perfect = comps.filter(c => c.quizBest === 100).length;
+  const user = await prisma.user.findUnique({ where: { id: uid }, select: { xpPoints: true } });
+  res.json({
+    ok: true,
+    modulesCompleted: comps.length, totalModules,
+    quizzesTaken: withQuiz.length, quizAvgScore: quizAvg, perfectScores: perfect,
+    xpPoints: user?.xpPoints || 0,
+    completionPct: totalModules ? Math.round((comps.length / totalModules) * 100) : 0,
+  });
+});
+
 // GET /api/v1/learning/module/:id/quiz — quiz questions WITHOUT answers
 router.get('/module/:id/quiz', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   const m = await prisma.learningModule.findFirst({ where: { id: req.params.id, isActive: true } });

@@ -65,9 +65,14 @@ router.get('/session/:token/next', async (req: Request, res: Response): Promise<
     const s = await prisma.simSession.findUnique({ where: { candidateToken: req.params.token } });
     if (!s) { res.status(404).json({ error: 'session not found' }); return; }
     if (s.isFinalized) { res.json({ success: true, done: true }); return; }
-    const items = await prisma.simBank.findMany({
+    let items = await prisma.simBank.findMany({
       where: { kind: s.kind, isActive: true, ...(s.track !== 'GENERAL' ? { track: s.track } : {}), ...(s.subject ? { subject: s.subject } : {}) },
     });
+    // Fallback: if this kind has no items in the chosen track, use the kind's GENERAL/any-track pool
+    // so no valid kind ever dead-ends with 0 questions.
+    if (items.length === 0) {
+      items = await prisma.simBank.findMany({ where: { kind: s.kind, isActive: true } });
+    }
     const responses = (s.responses as any[]) || [];
     const used = new Set(responses.map(r => r.itemId));
     const MAX = s.kind === 'OCEAN' ? 25 : 15;

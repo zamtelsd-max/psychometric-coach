@@ -133,7 +133,15 @@ function TestRunner() {
         {item.passage ? <p style={{ background: '#f1f5f9', padding: 14, borderRadius: 10, fontSize: 14.5, lineHeight: 1.6, whiteSpace: 'pre-wrap', marginBottom: 14 }}>{item.passage}</p> : null}
         <p style={{ fontSize: 17, lineHeight: 1.6, marginBottom: 18, whiteSpace: 'pre-wrap', maxWidth: '80ch' }}>{item.prompt}</p>
 
-        {isSJT && <p style={{ fontSize: 13, color: GOLD, fontWeight: 700, marginBottom: 6 }}>Pick the MOST effective (green) and LEAST effective (red).</p>}
+        {isSJT && (
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '10px 12px', marginBottom: 12, fontSize: 13 }}>
+            <b style={{ color: GOLD }}>Two choices needed:</b> tap a row for <b style={{ color: '#15803d' }}>MOST effective</b>, and the red <b style={{ color: '#dc2626' }}>Least</b> button for <b style={{ color: '#dc2626' }}>LEAST effective</b>.
+            <div style={{ marginTop: 6, display: 'flex', gap: 14, fontWeight: 700 }}>
+              <span style={{ color: sel ? '#15803d' : '#94a3b8' }}>Most: {sel || '— not chosen'}</span>
+              <span style={{ color: least ? '#dc2626' : '#94a3b8' }}>Least: {least || '— not chosen'}</span>
+            </div>
+          </div>
+        )}
 
         <div role="radiogroup" aria-label="Answer options">
           {(item.options || []).map((o: any, i: number) => {
@@ -141,15 +149,16 @@ function TestRunner() {
             const leastActive = least === o.key;
             return (
               <div key={o.key}
-                onClick={() => { if (isSJT) { if (least === o.key) return; setSel(o.key); } else setSel(o.key); }}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSel(o.key); } }}
+                onClick={() => { if (isSJT) { if (least === o.key) setLeast(''); setSel(o.key); } else setSel(o.key); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (isSJT && least === o.key) setLeast(''); setSel(o.key); } }}
                 role="radio" aria-checked={active} tabIndex={0}
                 style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '13px 15px', border: `2px solid ${active ? '#15803d' : leastActive ? '#dc2626' : '#e2e8f0'}`, borderRadius: 10, marginBottom: 9, cursor: 'pointer', background: active ? '#ecfdf3' : leastActive ? '#fef2f2' : '#fff', outline: 'none' }}>
-                <b style={{ color: BRAND }}>{isLikert ? '' : o.key + '.'}</b>
+                <b style={{ color: active ? '#15803d' : leastActive ? '#dc2626' : BRAND }}>{isLikert ? '' : o.key + '.'}</b>
                 <span style={{ flex: 1 }}>{o.label}</span>
+                {active && <span style={{ fontSize: 11, fontWeight: 800, color: '#15803d' }}>✓ MOST</span>}
                 {isSJT && (
-                  <button type="button" onClick={(e) => { e.stopPropagation(); if (sel === o.key) return; setLeast(o.key); }}
-                    style={{ fontSize: 11, fontWeight: 800, padding: '4px 8px', borderRadius: 6, border: 'none', cursor: 'pointer', background: leastActive ? '#dc2626' : '#fee2e2', color: leastActive ? '#fff' : '#991b1b' }}>Least</button>
+                  <button type="button" onClick={(e) => { e.stopPropagation(); if (sel === o.key) setSel(''); setLeast(leastActive ? '' : o.key); }}
+                    style={{ fontSize: 11, fontWeight: 800, padding: '5px 10px', borderRadius: 6, border: leastActive ? '2px solid #dc2626' : '1px solid #fca5a5', cursor: 'pointer', background: leastActive ? '#dc2626' : '#fff', color: leastActive ? '#fff' : '#dc2626' }}>{leastActive ? '✓ Least' : 'Least'}</button>
                 )}
               </div>
             );

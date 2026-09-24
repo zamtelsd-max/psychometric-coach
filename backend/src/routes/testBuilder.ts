@@ -58,21 +58,47 @@ router.post('/:id/invites', authenticate, [body('emails').isArray({ min: 1 })], 
 
 // GET /api/v1/testbuilder/public/:token — FR-1.4 prospect screen data (FR-2 localized)
 router.get('/public/:token', async (req: Request, res: Response): Promise<void> => {
-  const link = await prisma.testLink.findUnique({ where: { token: req.params.token }, include: { test: true } });
-  if (!link || (link.expiresAt && link.expiresAt < new Date())) { res.status(404).json({ error: 'invite link invalid or expired' }); return; }
+  const token = req.params.token;
+  // Accept BOTH link types: a per-candidate TestLink token OR a CustomTest.linkToken
+  // (the Enterprise Hub emits the customTest linkToken, so both must resolve).
+  let testMeta: { title: string; description: string; questionIds: string[] } | null = null;
+  let candidate = '';
+  let testLinkId: string | null = null;
+
+  const link = await prisma.testLink.findUnique({ where: { token }, include: { test: true } }).catch(() => null);
+  if (link) {
+    if (link.expiresAt && link.expiresAt < new Date()) { res.status(404).json({ error: 'invite link invalid or expired' }); return; }
+    testMeta = { title: link.test.title, description: link.test.description, questionIds: link.test.questionIds };
+    candidate = link.candidateEmail; testLinkId = link.id;
+  } else {
+    const ct = await prisma.customTest.findUnique({ where: { linkToken: token } }).catch(() => null);
+    if (ct) testMeta = { title: ct.title, description: ct.description, questionIds: ct.questionIds };
+  }
+
+  if (!testMeta) { res.status(404).json({ error: 'invite link invalid or expired' }); return; }
+  if (!testMeta.questionIds || testMeta.questionIds.length === 0) { res.status(404).json({ error: 'This assessment has no questions yet. Please contact the recruiter.' }); return; }
+
   const set = await getLocalizationSet(detectRegion(req));
-  const rows = await prisma.question.findMany({ where: { id: { in: link.test.questionIds }, isActive: true } });
+  const rows = await prisma.question.findMany({ where: { id: { in: testMeta.questionIds }, isActive: true } });
   const byId = new Map(rows.map(r => [r.id, r]));
-  const questions = link.test.questionIds.map(id => byId.get(id)).filter(Boolean).map(q => localizeQuestion({ id: q!.id, questionText: q!.text, options: q!.options, timeLimit: q!.timeLimit }, set));
-  await prisma.testLink.update({ where: { id: link.id }, data: { usedCount: { increment: 1 } } });
-  res.json({ test: { title: link.test.title, description: link.test.description }, candidate: link.candidateEmail, questions });
+  const questions = testMeta.questionIds.map(id => byId.get(id)).filter(Boolean).map(q => localizeQuestion({ id: q!.id, questionText: q!.text, options: q!.options, timeLimit: q!.timeLimit }, set));
+  if (questions.length === 0) { res.status(404).json({ error: 'This assessment has no active questions. Please contact the recruiter.' }); return; }
+  if (testLinkId) await prisma.testLink.update({ where: { id: testLinkId }, data: { usedCount: { increment: 1 } } });
+  res.json({ test: { title: testMeta.title, description: testMeta.description }, candidate: candidate || 'Candidate', questions });
 });
 
 // POST /api/v1/testbuilder/public/:token/submit — candidate submission store
 router.post('/public/:token/submit', async (req: Request, res: Response): Promise<void> => {
-  const link = await prisma.testLink.findUnique({ where: { token: req.params.token } });
-  if (!link) { res.status(404).json({ error: 'invalid link' }); return; }
-  await prisma.testLink.update({ where: { id: link.id }, data: { responses: req.body?.answers ?? {}, submittedAt: new Date() } });
+  const token = req.params.token;
+  const link = await prisma.testLink.findUnique({ where: { token } }).catch(() => null);
+  if (link) {
+    await prisma.testLink.update({ where: { id: link.id }, data: { responses: req.body?.answers ?? {}, submittedAt: new Date() } });
+    res.json({ ok: true }); return;
+  }
+  // customTest.linkToken path: create a TestLink record to store the submission
+  const ct = await prisma.customTest.findUnique({ where: { linkToken: token } }).catch(() => null);
+  if (!ct) { res.status(404).json({ error: 'invalid link' }); return; }
+  await prisma.testLink.create({ data: { token: crypto.randomBytes(12).toString('hex'), testId: ct.id, candidateEmail: req.body?.email || 'anonymous', responses: req.body?.answers ?? {}, submittedAt: new Date() } }).catch(() => {});
   res.json({ ok: true });
 });
 

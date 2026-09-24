@@ -11,6 +11,7 @@ const navGroups = [
   { title: 'Practice Hub', items: [
     { href: '/dashboard', icon: '🏠', label: 'Dashboard' },
     { href: '/assessments', icon: '🎯', label: 'My Assessments' },
+    { href: '/simulator', icon: '🧪', label: 'Assessment Simulator' },
     { href: '/practice', icon: '✏️', label: 'Practice' },
     { href: '/mock-exams', icon: '📋', label: 'Mock Exams' },
     { href: '/library', icon: '📚', label: 'Library' },

@@ -709,6 +709,7 @@ model LearningModule {
   contentHtml String
   estMinutes Int      @default(5) // AI-calculated reading duration (FR-5.2)
   tags       String[] // gap skills this module fixes (FR-5.1/5.4)
+  quiz       Json?    // [{q, options:[{key,label}], correctKey, explain}] end-of-module check
   isActive   Boolean  @default(true)
   completions ModuleCompletion[]
   createdAt  DateTime @default(now())
@@ -724,6 +725,8 @@ model ModuleCompletion {
   user      User           @relation(fields: [userId], references: [id])
   moduleId  String
   module    LearningModule @relation(fields: [moduleId], references: [id])
+  quizBest  Int            @default(0) // best quiz score % (for XP-once)
+  quizXpAwarded Boolean    @default(false)
   completedAt DateTime     @default(now())
 
   @@unique([userId, moduleId])

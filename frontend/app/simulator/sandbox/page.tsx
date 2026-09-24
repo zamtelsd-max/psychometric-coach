@@ -35,6 +35,7 @@ function Sandbox() {
   const [wireA, setWireA] = useState('');
   const [code, setCode] = useState(STARTER);
   const [result, setResult] = useState<any>(null);
+  const [terminal, setTerminal] = useState('');
   const [hint, setHint] = useState<{ level: number; hint: string } | null>(null);
   const [hintsUsed, setHintsUsed] = useState(0);
   const [running, setRunning] = useState(false);
@@ -64,8 +65,15 @@ function Sandbox() {
   };
 
   const run = async () => {
-    setRunning(true);
+    setRunning(true); setTerminal('');
     const id = challenge?.id || 'smartfarm';
+    // 1) real code execution against unit tests (live terminal output)
+    try {
+      const ex = await fetch(`${API}/simulator/sandbox/${id}/execute`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) });
+      const ed = await ex.json();
+      if (ed.success) setTerminal(`$ micropython main.py\n${ed.terminal}\n\n${ed.passed}/${ed.total} unit tests passed`);
+    } catch {}
+    // 2) full grade (AST + circuit + unit + safety)
     const circuit = { components: placed.map(p => ({ type: p.type })), wires: wires.map(w => ({ from: w[0], to: w[1] })) };
     const r = await fetch(`${API}/simulator/sandbox/${id}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, circuit, hintsUsed }) });
     setResult(await r.json()); setRunning(false);
@@ -125,6 +133,8 @@ function Sandbox() {
             </div>
           </div>
         </div>
+
+        {terminal && <pre style={{ marginTop: 14, background: '#0b1420', color: '#a5f3d0', border: '1px solid rgba(255,255,255,.1)', borderRadius: 10, padding: 14, fontSize: 12.5, fontFamily: 'ui-monospace,Menlo,monospace', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{terminal}</pre>}
 
         {hint && <div style={{ marginTop: 14, background: 'rgba(212,175,55,.12)', border: '1px solid rgba(212,175,55,.3)', borderRadius: 12, padding: 14, whiteSpace: 'pre-wrap', fontSize: 13.5 }}><b style={{ color: GOLD }}>Hint {hint.level}/3:</b> {hint.hint}</div>}
 

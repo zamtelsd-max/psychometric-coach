@@ -17,6 +17,9 @@ const navGroups = [
     { href: '/library', icon: '📚', label: 'Library' },
     { href: '/learning', icon: '⚡', label: 'AI Growth Center' },
   ]},
+  { title: 'Educator', items: [
+    { href: '/teacher', icon: '👩‍🏫', label: 'Teacher Dashboard' },
+  ]},
   { title: 'Career Tools', items: [
     { href: '/interview', icon: '🎤', label: 'Interview Panel' },
     { href: '/matcher', icon: '🧭', label: 'Resume Matcher' },

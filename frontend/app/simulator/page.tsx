@@ -19,6 +19,7 @@ export default function SimulatorHub() {
   const [kinds, setKinds] = useState<any[]>([]);
   const [kind, setKind] = useState('NUMERICAL');
   const [track, setTrack] = useState('GENERAL');
+  const [joinCode, setJoinCode] = useState('');
 
   useEffect(() => {
     fetch(`${API}/simulator/catalog`).then(r => r.json()).then(d => { setTracks(d.tracks || []); setKinds(d.kinds || []); }).catch(() => {});
@@ -26,7 +27,7 @@ export default function SimulatorHub() {
 
   // UK/Zambian academic tracks carry curriculum subjects → use the ACADEMIC engine.
   const effectiveKind = (track === 'UK_GCSE' || track === 'UK_ALEVEL' || track === 'ZM_ECZ') ? 'ACADEMIC' : kind;
-  const start = () => router.push(`/simulator/test/?kind=${effectiveKind}&track=${track}`);
+  const start = () => router.push(`/simulator/test/?kind=${effectiveKind}&track=${track}${joinCode ? `&join=${encodeURIComponent(joinCode.toUpperCase())}` : ''}`);
 
   return (
     <div className="pc-page max-w-4xl">
@@ -52,7 +53,9 @@ export default function SimulatorHub() {
         </select>
         <p className="text-xs text-slate-500 mt-1 mb-4">Academic tracks map results to grade bands (GCSE 9–1, A-Level A*–E, ECZ Distinction–Developing) and run curriculum subjects. Zambian track uses local context &amp; ZMW.</p>
         {effectiveKind !== kind && <p className="text-xs mb-3" style={{ color: GOLD }}>This curriculum track runs the <b>Academic</b> subject engine.</p>}
-        <button className="pc-btn pc-btn-primary w-full" onClick={start}>Start adaptive assessment →</button>
+        <label className="pc-label">Class join code <span style={{ fontWeight: 400, color: '#94a3b8' }}>(optional — from your teacher)</span></label>
+        <input className="pc-input" style={{ textTransform: 'uppercase', maxWidth: 200 }} placeholder="e.g. A1B2C3" value={joinCode} onChange={e => setJoinCode(e.target.value)} />
+        <button className="pc-btn pc-btn-primary w-full" style={{ marginTop: 12 }} onClick={start}>Start adaptive assessment →</button>
       </div>
 
       <div className="mt-6 pc-card" style={{ background: 'linear-gradient(135deg,#0e1c30,#16335B)', color: '#fff', borderColor: 'transparent' }}>

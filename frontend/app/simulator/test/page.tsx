@@ -33,6 +33,7 @@ function TestRunner() {
   useEffect(() => {
     const qs = new URLSearchParams(window.location.search);
     const k = qs.get('kind') || 'NUMERICAL'; const t = qs.get('track') || 'GENERAL';
+    const joinCode = qs.get('join') || '';
     setKind(k); setTrack(t);
     // interruption recovery
     const saved = localStorage.getItem('sim_token_' + k + '_' + t);
@@ -40,7 +41,7 @@ function TestRunner() {
       try {
         let tok = saved;
         if (!tok) {
-          const r = await fetch(`${API}/simulator/session/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: k, track: t }) });
+          const r = await fetch(`${API}/simulator/session/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: k, track: t, joinCode }) });
           const d = await r.json();
           if (!d.success) { setErr('Could not start the assessment.'); setPhase('error'); return; }
           tok = d.sessionToken; localStorage.setItem('sim_token_' + k + '_' + t, tok!);

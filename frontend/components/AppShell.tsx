@@ -22,6 +22,7 @@ const navGroups = [
     { href: '/passports', icon: '🎫', label: 'Prep Passports' },
   ]},
   { title: 'Enterprise', items: [
+    { href: '/enterprise-workforce', icon: '🧠', label: 'Workforce Assessment' },
     { href: '/employer', icon: '👔', label: 'Employer Workspace' },
     { href: '/enterprise', icon: '💼', label: 'Enterprise Hub' },
     { href: '/screening-admin', icon: '🛡️', label: 'Recruiter Console' },

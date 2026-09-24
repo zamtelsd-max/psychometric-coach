@@ -60,7 +60,25 @@ export default function LearningPage() {
                 <span style={{ background: 'rgba(212,175,55,.15)', color: GOLD, fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 12 }}>{open.durationLabel}</span>
               </div>
               <p style={{ color: GOLD, fontSize: 13, fontWeight: 700, margin: '8px 0 14px' }}>💡 {open.rationale}</p>
-              <div className="prose-sm" style={{ color: '#e2e8f0', fontSize: 14.5, lineHeight: 1.7 }} dangerouslySetInnerHTML={{ __html: content }} />
+              <div className="growth-content" style={{ color: '#e2e8f0', fontSize: 14.5, lineHeight: 1.7 }} dangerouslySetInnerHTML={{ __html: content }} />
+              <style>{`
+                .growth-content h3 { color:#fff; font-size:16px; font-weight:800; margin:20px 0 8px; border-left:3px solid ${GOLD}; padding-left:10px; }
+                .growth-content p { margin:10px 0; }
+                .growth-content p.lead { font-size:15.5px; color:#f1f5f9; font-weight:500; background:rgba(212,175,55,.08); border-radius:10px; padding:12px 14px; }
+                .growth-content ul, .growth-content ol { margin:10px 0 10px 4px; padding-left:20px; }
+                .growth-content li { margin:5px 0; }
+                .growth-content b { color:#fff; }
+                .growth-content .worked { background:rgba(30,58,95,.55); border:1px solid rgba(148,163,184,.25); border-radius:12px; padding:14px 16px; margin:14px 0; }
+                .growth-content .worked-h { font-weight:800; color:#93c5fd; margin-bottom:6px; }
+                .growth-content .callout { border-radius:12px; padding:12px 14px; margin:14px 0; font-size:13.8px; }
+                .growth-content .callout.tip { background:rgba(59,130,246,.12); border:1px solid rgba(96,165,250,.3); }
+                .growth-content .callout.warn { background:rgba(239,68,68,.10); border:1px solid rgba(248,113,113,.3); }
+                .growth-content .callout.key { background:rgba(34,197,94,.10); border:1px solid rgba(74,222,128,.35); }
+                .growth-content .callout.key ul { margin-top:6px; }
+                .growth-content details.quiz { background:rgba(212,175,55,.10); border:1px solid rgba(212,175,55,.3); border-radius:10px; padding:10px 14px; margin:14px 0; }
+                .growth-content details.quiz summary { cursor:pointer; font-weight:700; color:${GOLD}; }
+                .growth-content details.quiz > div { margin-top:8px; color:#cbd5e1; }
+              `}</style>
               {unlock && (
                 <div style={{ marginTop: 16, background: 'rgba(74,222,128,.12)', border: '1px solid rgba(74,222,128,.4)', borderRadius: 12, padding: 14 }}>
                   <b style={{ color: '#4ade80' }}>🎓 Certification exam unlocked: {unlock}</b>

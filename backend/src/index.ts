@@ -28,6 +28,7 @@ import platformRoutes from './routes/platform';
 import employerRoutes from './routes/employer';
 import testBuilderRoutes from './routes/testBuilder';
 import enterpriseV2Routes, { telemetryRouter, purgeStaleTelemetry } from './routes/enterpriseV2';
+import simulatorRoutes from './routes/simulator';
 import { startMsrScheduler } from './services/msr';
 import logger from './lib/logger';
 
@@ -135,6 +136,8 @@ app.use('/api/v1/enterprise', enterpriseRoutes);
 app.use('/api/v1/screening',  screeningRoutes);
 // Enterprise Blueprint v4.0 (100-Q sim, telemetry, corporate reports, certificates)
 app.use('/api/v1/enterprise-v2', enterpriseV2Routes);
+// Candidate Assessment & Engineering Simulator (individual journey)
+app.use('/api/v1/simulator',   simulatorRoutes);
 // Telemetry ingestion accepts sendBeacon (text/plain) + JSON; parse both.
 app.use('/api/v1/exams', express.text({ type: '*/*', limit: '256kb' }), telemetryRouter);
 

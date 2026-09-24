@@ -917,3 +917,75 @@ model TrainingRequest {
   @@map("training_requests")
   @@schema("pc")
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// CANDIDATE ASSESSMENT & ENGINEERING SIMULATOR (Enhancement PRS)
+// Individual assessment journey — adaptive IRT engine, academic tracks, sandbox.
+// ════════════════════════════════════════════════════════════════════════════
+
+model SimBank {
+  id          String   @id @default(cuid())
+  kind        String   // NUMERICAL | VERBAL | OCEAN | SJT | ACADEMIC | ENGINEERING
+  track       String   @default("GENERAL") // UK_GCSE | UK_ALEVEL | ZM_ECZ | GENERAL
+  subject     String   @default("")        // e.g. Mathematics, Physics, Biology
+  prompt      String
+  passage     String   @default("")
+  diagramData Json?
+  options     Json                          // [{key,label}] or Likert / most-least sets
+  correctKey  String   @default("")         // for scored items
+  leastKey    String   @default("")         // SJT least-effective
+  trait       String   @default("")         // OCEAN dimension or SDS
+  reverse     Boolean  @default(false)      // reverse-scored Likert
+  difficulty  Float    @default(0.0)        // IRT b-parameter (theta scale)
+  discrimination Float @default(1.0)        // IRT a-parameter
+  explanation String   @default("")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([kind, track, subject])
+  @@map("sim_bank")
+  @@schema("pc")
+}
+
+model SimSession {
+  id           String   @id @default(cuid())
+  userId       String?
+  candidateToken String @unique
+  kind         String
+  track        String   @default("GENERAL")
+  subject      String   @default("")
+  theta        Float    @default(0.0)       // adaptive ability estimate
+  answered     Int      @default(0)
+  correct      Int      @default(0)
+  responses    Json?                        // [{itemId, key, correct, ms, theta}]
+  oceanScores  Json?                        // {O,C,E,A,N, sds}
+  finalScore   Float?
+  state        Json?                        // serialized layout for interruption recovery
+  isFinalized  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([candidateToken])
+  @@map("sim_sessions")
+  @@schema("pc")
+}
+
+model SandboxSubmission {
+  id           String   @id @default(cuid())
+  userId       String?
+  challengeId  String
+  code         String   @default("")
+  circuit      Json?                          // {components:[], wires:[]}
+  astScore     Float    @default(0)
+  circuitScore Float    @default(0)
+  unitScore    Float    @default(0)
+  totalScore   Float    @default(0)
+  passed       Boolean  @default(false)
+  hintsUsed    Int      @default(0)
+  feedback     Json?
+  createdAt    DateTime @default(now())
+
+  @@index([challengeId])
+  @@map("sandbox_submissions")
+  @@schema("pc")
+}

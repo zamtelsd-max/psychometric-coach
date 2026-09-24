@@ -222,8 +222,9 @@ function buildScenario(dept: string, tier: string, industry: string, ordinal: nu
     person: pick(PEOPLE, rand), stake: pick(STAKES, rand), event: pick(EVENTS, rand),
     cash: (Math.floor(rand() * 900 + 100) * 1000).toLocaleString(), r: rand,
   };
-  // rotate templates by ordinal + randomness so consecutive Qs differ
-  const tmpl = TEMPLATES[(ordinal + Math.floor(rand() * TEMPLATES.length)) % TEMPLATES.length];
+  // rotate templates so consecutive Qs never reuse the same one; a per-seed offset
+  // (stored on the rand stream) staggers the cycle differently per candidate.
+  const tmpl = TEMPLATES[ordinal % TEMPLATES.length];
   const built = tmpl(ctx);
   // shuffle options so the correct answer isn't always first; track its new position
   const correctLabel = built.options[built.correctIdx].label;

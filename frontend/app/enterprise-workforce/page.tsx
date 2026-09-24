@@ -13,7 +13,7 @@ export default function EnterpriseWorkforcePage() {
   const [orgs, setOrgs] = useState<any[]>([]);
   const [orgId, setOrgId] = useState('');
   const [companyName, setCompanyName] = useState('');
-  const [form, setForm] = useState({ candidateName: '', candidateEmail: '', jobTitle: '', targetDepartment: '', targetTier: '', industryField: 'General' });
+  const [form, setForm] = useState({ candidateName: '', candidateEmail: '', jobTitle: '', targetDepartment: '', targetTier: '', industryField: 'General', questionCount: 100 });
   const [generating, setGenerating] = useState(false);
   const [invite, setInvite] = useState<any>(null);
   const [report, setReport] = useState<Dept[]>([]);
@@ -51,7 +51,7 @@ export default function EnterpriseWorkforcePage() {
     if (!form.jobTitle && (!form.targetDepartment || !form.targetTier)) { setErr('Pick a job title to generate questions.'); return; }
     setGenerating(true);
     try {
-      const r = await fetch(`${API}/enterprise-v2/sessions`, { method: 'POST', headers: hdr(), body: JSON.stringify({ orgId, ...form }) });
+      const r = await fetch(`${API}/enterprise-v2/sessions`, { method: 'POST', headers: hdr(), body: JSON.stringify({ orgId, ...form, questionCount: form.questionCount }) });
       const d = await r.json();
       if (d.success) { setInvite(d); setMsg('✅ 100 unique questions generated — assessment link ready.'); }
       else setErr(d.error || 'Failed to generate.');
@@ -139,8 +139,21 @@ export default function EnterpriseWorkforcePage() {
           </div>
         </details>
 
+        <label className="pc-label">Number of questions</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+          {[25, 30, 40, 50, 60, 70, 80, 90, 100].map(n => (
+            <button key={n} type="button" onClick={() => setForm({ ...form, questionCount: n })}
+              style={{
+                padding: '9px 0', width: 58, borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: 'pointer',
+                border: form.questionCount === n ? `2px solid ${BRAND}` : '1px solid #e2e8f0',
+                background: form.questionCount === n ? BRAND : '#fff',
+                color: form.questionCount === n ? '#fff' : '#334155',
+              }}>{n}</button>
+          ))}
+        </div>
+
         <button style={{ ...btn, width: '100%', padding: '13px', opacity: generating ? 0.6 : 1 }} disabled={generating || !form.jobTitle} onClick={createSession}>
-          {generating ? 'Generating 100 questions…' : '⚡ Generate Questions (one click)'}
+          {generating ? `Generating ${form.questionCount} questions…` : `⚡ Generate ${form.questionCount} Questions (one click)`}
         </button>
         {invite && (
           <div style={{ marginTop: 14, padding: 14, background: '#f1f5f9', borderRadius: 10 }}>

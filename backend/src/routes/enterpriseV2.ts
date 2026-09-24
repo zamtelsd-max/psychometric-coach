@@ -240,9 +240,12 @@ function buildScenario(dept: string, tier: string, industry: string, ordinal: nu
 // ── Admin: create a 100-Q candidate session (§3, §4) ─────────────────────────
 router.post('/sessions', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { orgId, candidateName, candidateEmail, targetDepartment, targetTier, industryField, jobTitle } = req.body || {};
+    const { orgId, candidateName, candidateEmail, targetDepartment, targetTier, industryField, jobTitle, questionCount } = req.body || {};
     if (!orgId || !targetDepartment || !targetTier) { res.status(400).json({ error: 'orgId, targetDepartment, targetTier required' }); return; }
     if (!TIERS.includes(targetTier)) { res.status(400).json({ error: 'invalid targetTier' }); return; }
+    // Recruiter-selectable question bands: 25 / 30 / 40 / 50 / 60 / 70 / 80 / 90 / 100
+    const ALLOWED_COUNTS = [25, 30, 40, 50, 60, 70, 80, 90, 100];
+    const qCount = ALLOWED_COUNTS.includes(Number(questionCount)) ? Number(questionCount) : QUESTIONS_PER_EXAM;
     const org = await prisma.enterpriseOrg.findUnique({ where: { id: orgId } });
     if (!org) { res.status(404).json({ error: 'org not found' }); return; }
 
@@ -253,7 +256,7 @@ router.post('/sessions', authenticate, async (req: AuthRequest, res: Response): 
 
     const qData: any[] = [];
     let prevRisk = '';
-    for (let i = 1; i <= QUESTIONS_PER_EXAM; i++) {
+    for (let i = 1; i <= qCount; i++) {
       const s = buildScenario(targetDepartment, targetTier, industryField || 'General', i, prevRisk, rand, jobTitle);
       prevRisk = s.riskFactor; // §3.1 block N mutates N+1
       qData.push({
@@ -270,7 +273,7 @@ router.post('/sessions', authenticate, async (req: AuthRequest, res: Response): 
       },
     });
     const link = `https://www.psychometriccoach.com/exam/entry/?k=${session.id}.${accessToken}`;
-    res.json({ success: true, sessionId: session.id, accessToken, examLink: link, totalQuestions: QUESTIONS_PER_EXAM });
+    res.json({ success: true, sessionId: session.id, accessToken, examLink: link, totalQuestions: qCount });
   } catch (e) { console.error('session create', e); res.status(500).json({ error: 'failed' }); }
 });
 
@@ -284,7 +287,7 @@ router.get('/exam/:id', async (req: Request, res: Response): Promise<void> => {
     session: {
       id: s.id, candidateName: s.candidateName, trackTitle: s.trackTitle,
       targetDepartment: s.targetDepartment, targetTier: s.targetTier,
-      totalQuestions: QUESTIONS_PER_EXAM, blockSize: BLOCK_SIZE,
+      totalQuestions: await prisma.sessionQuestion.count({ where: { sessionId: s.id } }), blockSize: BLOCK_SIZE,
       currentQuestionIndex: s.currentQuestionIndex, isFinalized: s.isFinalized,
     },
   });
@@ -293,7 +296,7 @@ router.get('/exam/:id', async (req: Request, res: Response): Promise<void> => {
 // ── Candidate: fetch a block of 10 (§3.2 rolling pre-cache) ──────────────────
 router.get('/exam/:id/block/:block', async (req: Request, res: Response): Promise<void> => {
   const token = String(req.query.t || '');
-  const block = Math.max(1, Math.min(10, parseInt(req.params.block, 10) || 1));
+  const block = Math.max(1, Math.min(20, parseInt(req.params.block, 10) || 1));
   const s = await prisma.candidateSession.findUnique({ where: { id: req.params.id } });
   if (!s || s.accessToken !== token) { res.status(403).json({ error: 'invalid session' }); return; }
   if (s.startedAt == null) await prisma.candidateSession.update({ where: { id: s.id }, data: { startedAt: new Date() } });

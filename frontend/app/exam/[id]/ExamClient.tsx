@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 const BRAND = '#16335B', GOLD = '#C99A2E';
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://http--psychometric-api--x7m7kyc8mh8j.code.run/api/v1';
 const BLOCK_SIZE = 10;
-const TOTAL = 100;
+
 
 // Blueprint typography (§6): Inter/Roboto, 720px / 80ch max line-length
 const fontStack = "Inter, Roboto, system-ui, sans-serif";
@@ -42,6 +42,7 @@ export default function ExamClient() {
   const [id, setId] = useState('');
   const [token, setToken] = useState('');
   const [session, setSession] = useState<any>(null);
+  const [total, setTotal] = useState(100);
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(true);
   const [idx, setIdx] = useState(1); // 1-based question ordinal
@@ -90,6 +91,7 @@ export default function ExamClient() {
         const d = await r.json();
         if (!d.success) { setErr('This assessment link is invalid or expired.'); setLoading(false); return; }
         setSession(d.session);
+        if (d.session.totalQuestions) setTotal(d.session.totalQuestions);
         if (d.session.isFinalized) { setErr('This assessment has already been completed.'); setLoading(false); return; }
         setIdx(d.session.currentQuestionIndex || 1);
         // §3.2 — first 10 within a 2.5s window, then prefetch block 2
@@ -120,7 +122,7 @@ export default function ExamClient() {
     if (!key) return;
     tele.current?.ship();
     try { await fetch(`${API}/enterprise-v2/exam/${id}/answer`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, ordinal: idx, answerKey: key }) }); } catch {}
-    if (idx >= TOTAL) { await finalize(); return; }
+    if (idx >= total) { await finalize(); return; }
     const next = idx + 1;
     if (!cache.current[blockOf(next)]) await fetchBlock(blockOf(next), token);
     setIdx(next);
@@ -174,12 +176,12 @@ export default function ExamClient() {
 
   if (!ready || !current) return <div style={{ ...wrap, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div>Preparing questions…</div></div>;
 
-  const pct = Math.round((idx / TOTAL) * 100);
+  const pct = Math.round((idx / total) * 100);
   return (
     <div style={{ ...wrap, padding: '28px 16px' }}>
       <div style={{ maxWidth: 720, margin: '0 auto 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontWeight: 800, color: BRAND }}>{session?.trackTitle}</div>
-        <div style={{ fontSize: 13, color: '#64748b' }}>Question {idx} / {TOTAL}</div>
+        <div style={{ fontSize: 13, color: '#64748b' }}>Question {idx} / {total}</div>
       </div>
       <div style={{ maxWidth: 720, margin: '0 auto 16px', height: 6, background: '#e2e8f0', borderRadius: 99 }}>
         <div style={{ width: `${pct}%`, height: '100%', background: GOLD, borderRadius: 99, transition: 'width .3s' }} />
@@ -199,7 +201,7 @@ export default function ExamClient() {
         </div>
         <button disabled={!answers[idx] || submitting} onClick={submitAnswer}
           style={{ marginTop: 12, width: '100%', background: answers[idx] ? BRAND : '#cbd5e1', color: '#fff', border: 'none', padding: '14px', borderRadius: 10, fontWeight: 800, fontSize: 15, cursor: answers[idx] ? 'pointer' : 'not-allowed' }}>
-          {submitting ? 'Submitting…' : idx >= TOTAL ? 'Finish & Submit' : 'Next Question →'}
+          {submitting ? 'Submitting…' : idx >= total ? 'Finish & Submit' : 'Next Question →'}
         </button>
       </div>
     </div>

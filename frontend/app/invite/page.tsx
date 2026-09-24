@@ -44,14 +44,21 @@ export default function InvitePage() {
         <h1 style={{ fontSize: 24, fontWeight: 900, margin: '12px 0 4px' }}>{data.test.title}</h1>
         <p style={{ color: '#cbd5e1', fontSize: 14, margin: '0 0 20px' }}>Invitation for <b>{data.candidate}</b> · Question {idx + 1} of {data.questions.length}</p>
         <div style={{ background: 'rgba(15,23,42,.5)', border: '1px solid rgba(212,175,55,.3)', borderRadius: 16, padding: 24, marginBottom: 16 }}>
-          <p style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.5 }}>{q.questionText}</p>
+          <p style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.5 }}>{typeof q.questionText === "string" ? q.questionText : (q.questionText?.text ?? "")}</p>
         </div>
-        {(q.options || []).map((o: any) => (
-          <label key={o.label} onClick={() => setAnswers({ ...answers, [q.id]: o.label })}
-            style={{ display: 'flex', gap: 10, alignItems: 'center', background: answers[q.id] === o.label ? 'rgba(212,175,55,.15)' : 'rgba(15,23,42,.5)', border: `1px solid ${answers[q.id] === o.label ? GOLD : 'rgba(255,255,255,.08)'}`, borderRadius: 12, padding: 13, marginBottom: 8, cursor: 'pointer', fontSize: 14.5 }}>
-            <b style={{ color: GOLD }}>{o.label}</b> {o.content ?? o}
-          </label>
-        ))}
+        {(q.options || []).map((o: any, oi: number) => {
+          // options may be: plain string | {label,content} | {id,text,isCorrect}
+          const optKey = typeof o === 'string' ? o : (o.id ?? o.label ?? String(oi));
+          const optText = typeof o === 'string' ? o : (o.content ?? o.text ?? o.label ?? '');
+          const letter = String.fromCharCode(65 + oi); // A, B, C, D
+          const selected = answers[q.id] === optKey;
+          return (
+            <label key={optKey} onClick={() => setAnswers({ ...answers, [q.id]: optKey })}
+              style={{ display: 'flex', gap: 10, alignItems: 'center', background: selected ? 'rgba(212,175,55,.15)' : 'rgba(15,23,42,.5)', border: `1px solid ${selected ? GOLD : 'rgba(255,255,255,.08)'}`, borderRadius: 12, padding: 13, marginBottom: 8, cursor: 'pointer', fontSize: 14.5 }}>
+              <b style={{ color: GOLD }}>{letter}.</b> <span>{optText}</span>
+            </label>
+          );
+        })}
         <button onClick={() => (idx + 1 >= data.questions.length ? submit() : setIdx(idx + 1))} style={{ marginTop: 12, background: GOLD, color: BRAND, fontWeight: 800, padding: '12px 26px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 15 }}>
           {idx + 1 >= data.questions.length ? 'Submit assessment' : 'Next question →'}
         </button>

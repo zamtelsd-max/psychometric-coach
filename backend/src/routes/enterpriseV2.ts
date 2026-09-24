@@ -23,6 +23,54 @@ const DEPARTMENTS = [
 ];
 const TIERS = ['Operations', 'Mid Management', 'Senior Management', 'Executive'];
 
+// Job-title catalog per department (blueprint §4.1). Each entry maps a pickable
+// job title to its department + default corporate tier, so the builder is one-click.
+const JOB_TITLES: { title: string; department: string; tier: string }[] = [
+  // Executive / Leadership
+  { title: 'Chief Executive Officer (CEO)', department: 'Executive / Leadership', tier: 'Executive' },
+  { title: 'Chief Operating Officer (COO)', department: 'Executive / Leadership', tier: 'Executive' },
+  { title: 'Managing Director', department: 'Executive / Leadership', tier: 'Executive' },
+  { title: 'Executive Board Assistant', department: 'Executive / Leadership', tier: 'Senior Management' },
+  // Finance & Accounting
+  { title: 'Chief Financial Officer (CFO)', department: 'Finance & Accounting', tier: 'Executive' },
+  { title: 'Finance Manager', department: 'Finance & Accounting', tier: 'Mid Management' },
+  { title: 'Financial Analyst', department: 'Finance & Accounting', tier: 'Operations' },
+  { title: 'Accountant', department: 'Finance & Accounting', tier: 'Operations' },
+  { title: 'Internal Auditor', department: 'Finance & Accounting', tier: 'Mid Management' },
+  // HR
+  { title: 'Chief Human Resources Officer (CHRO)', department: 'Human Resources (HR)', tier: 'Executive' },
+  { title: 'HR Manager', department: 'Human Resources (HR)', tier: 'Mid Management' },
+  { title: 'Recruiter / Talent Acquisition', department: 'Human Resources (HR)', tier: 'Operations' },
+  { title: 'Learning & Development Lead', department: 'Human Resources (HR)', tier: 'Mid Management' },
+  // Marketing
+  { title: 'Chief Marketing Officer (CMO)', department: 'Marketing', tier: 'Executive' },
+  { title: 'Growth / Marketing Lead', department: 'Marketing', tier: 'Mid Management' },
+  { title: 'Brand Manager', department: 'Marketing', tier: 'Mid Management' },
+  { title: 'Content / Copywriter', department: 'Marketing', tier: 'Operations' },
+  { title: 'Market Research Analyst', department: 'Marketing', tier: 'Operations' },
+  // Sales
+  { title: 'VP of Sales', department: 'Sales', tier: 'Executive' },
+  { title: 'Sales Manager', department: 'Sales', tier: 'Mid Management' },
+  { title: 'Account Manager', department: 'Sales', tier: 'Operations' },
+  { title: 'Business Development Manager (BDM)', department: 'Sales', tier: 'Mid Management' },
+  { title: 'Sales Executive', department: 'Sales', tier: 'Operations' },
+  // Operations & Production
+  { title: 'Operations Director', department: 'Operations & Production', tier: 'Executive' },
+  { title: 'Operations / Project Manager', department: 'Operations & Production', tier: 'Mid Management' },
+  { title: 'Supply Chain / Inventory Lead', department: 'Operations & Production', tier: 'Mid Management' },
+  { title: 'Production Supervisor', department: 'Operations & Production', tier: 'Operations' },
+  // IT
+  { title: 'Chief Technology Officer (CTO)', department: 'Information Tech (IT)', tier: 'Executive' },
+  { title: 'IT Manager', department: 'Information Tech (IT)', tier: 'Mid Management' },
+  { title: 'Systems Administrator', department: 'Information Tech (IT)', tier: 'Operations' },
+  { title: 'Cybersecurity Analyst', department: 'Information Tech (IT)', tier: 'Mid Management' },
+  { title: 'Software Engineer', department: 'Information Tech (IT)', tier: 'Operations' },
+  // Customer Support
+  { title: 'Head of Customer Success', department: 'Customer Support', tier: 'Senior Management' },
+  { title: 'Customer Success Manager', department: 'Customer Support', tier: 'Mid Management' },
+  { title: 'Technical Support Agent', department: 'Customer Support', tier: 'Operations' },
+];
+
 // Base-62 encoder for the cryptographic confirmation stamp (§2.2)
 const B62 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 function base62(buf: Buffer): string {
@@ -35,7 +83,7 @@ function base62(buf: Buffer): string {
 
 // ── Department taxonomy (§4.1) ───────────────────────────────────────────────
 router.get('/taxonomy', (_req: Request, res: Response): void => {
-  res.json({ success: true, departments: DEPARTMENTS, tiers: TIERS });
+  res.json({ success: true, departments: DEPARTMENTS, tiers: TIERS, jobTitles: JOB_TITLES });
 });
 
 // ── Org registration / lookup (admin) ────────────────────────────────────────
@@ -79,30 +127,119 @@ const COMPETENCIES: Record<string, string[]> = {
 };
 const RISK_FACTORS = ['budget overrun', 'talent attrition', 'compliance breach', 'market shock', 'system outage', 'supply disruption'];
 
-function buildScenario(dept: string, tier: string, industry: string, ordinal: number, prevRisk: string, rand: () => number) {
+// Rich, varied scenario bank so no two questions sound the same.
+const pick = <T,>(arr: T[], r: () => number): T => arr[Math.floor(r() * arr.length)];
+const shuffle = <T,>(arr: T[], r: () => number): T[] => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+// Named actors, stakes and events to make each item concrete & distinct.
+const PEOPLE = ['a direct report', 'a senior peer', 'the board', 'a key client', 'a cross-functional team', 'a new hire', 'a long-tenured employee', 'an external partner', 'a regulator', 'a frustrated customer'];
+const STAKES = ['a quarterly target', 'a flagship launch', 'a compliance deadline', 'team morale', 'a major renewal', 'brand reputation', 'a go-live date', 'a cost ceiling', 'an SLA commitment', 'a strategic partnership'];
+const EVENTS = ['an unexpected resignation', 'a budget cut mid-cycle', 'a data breach alert', 'a supplier failing to deliver', 'conflicting priorities from two leaders', 'a public complaint going viral', 'a key metric dropping 20% overnight', 'a scope change requested late', 'a competitor undercutting on price', 'a critical system outage'];
+
+// Scenario templates: each takes concrete fillers and returns a distinct prompt + tailored options.
+type Tmpl = (ctx: { role: string; competency: string; person: string; stake: string; event: string; cash: string; r: () => number }) => { text: string; options: { key: string; label: string }[]; correctIdx: number };
+const TEMPLATES: Tmpl[] = [
+  ({ role, competency, event, stake }) => ({
+    text: `As ${role}, you learn of ${event} that directly threatens ${stake}. Your first move sets the tone. What do you do?`,
+    options: [
+      { key: 'x', label: `Gather the facts and the affected people, define the real problem, then act on evidence.` },
+      { key: 'x', label: `Act instantly on your gut to look decisive, before understanding the root cause.` },
+      { key: 'x', label: `Wait for someone more senior to tell you what to do.` },
+      { key: 'x', label: `Downplay it internally so no one panics, and hope it resolves itself.` },
+    ], correctIdx: 0,
+  }),
+  ({ role, person, stake }) => ({
+    text: `${person[0].toUpperCase() + person.slice(1)} disagrees with your plan for ${stake} in a meeting, in front of others. How do you handle it as ${role}?`,
+    options: [
+      { key: 'x', label: `Acknowledge their point, ask for their reasoning, and evaluate it on merit.` },
+      { key: 'x', label: `Shut the objection down to protect your authority.` },
+      { key: 'x', label: `Concede immediately to avoid conflict, even if your plan was sound.` },
+      { key: 'x', label: `Take it personally and raise it with them angrily afterwards.` },
+    ], correctIdx: 0,
+  }),
+  ({ role, competency, cash }) => ({
+    text: `You have $${cash} and can fund only one of three initiatives tied to ${competency}. Two leaders each insist theirs is critical. As ${role}, how do you decide?`,
+    options: [
+      { key: 'x', label: `Rank them against clear, agreed criteria (impact, risk, ROI) and fund transparently.` },
+      { key: 'x', label: `Fund whoever lobbied you hardest.` },
+      { key: 'x', label: `Split the money three ways so no one is upset, even if nothing gets fully done.` },
+      { key: 'x', label: `Delay the decision indefinitely until the pressure passes.` },
+    ], correctIdx: 0,
+  }),
+  ({ role, event }) => ({
+    text: `A mistake you made contributed to ${event}. Leadership hasn't noticed yet. As ${role}, what is the right action?`,
+    options: [
+      { key: 'x', label: `Own it early, bring a fix and a prevention plan, and inform the right people.` },
+      { key: 'x', label: `Stay quiet and hope no one traces it back to you.` },
+      { key: 'x', label: `Quietly shift the blame onto a teammate.` },
+      { key: 'x', label: `Fix it silently but hide that it ever happened.` },
+    ], correctIdx: 0,
+  }),
+  ({ role, competency, person }) => ({
+    text: `${person[0].toUpperCase() + person.slice(1)} is consistently underperforming on work tied to ${competency}. As ${role}, what is the most effective response?`,
+    options: [
+      { key: 'x', label: `Have a direct, private conversation, understand the cause, and agree measurable next steps.` },
+      { key: 'x', label: `Ignore it and quietly redistribute their work to others.` },
+      { key: 'x', label: `Criticise them publicly to make an example.` },
+      { key: 'x', label: `Escalate to termination immediately without any coaching.` },
+    ], correctIdx: 0,
+  }),
+  ({ role, stake, event }) => ({
+    text: `${event[0].toUpperCase() + event.slice(1)} puts ${stake} at serious risk with little time left. As ${role}, what is your priority?`,
+    options: [
+      { key: 'x', label: `Protect the outcome that matters most, communicate trade-offs, and mobilise focused effort.` },
+      { key: 'x', label: `Try to save everything at once and spread the team too thin.` },
+      { key: 'x', label: `Freeze and wait for perfect information before doing anything.` },
+      { key: 'x', label: `Blame external factors and lower your own effort.` },
+    ], correctIdx: 0,
+  }),
+  ({ role, competency }) => ({
+    text: `A shortcut would hit this quarter's ${competency} numbers but bends a policy or ethical line. As ${role}, what do you choose?`,
+    options: [
+      { key: 'x', label: `Decline the shortcut and find a compliant path, even if slower.` },
+      { key: 'x', label: `Take the shortcut since results are what get rewarded.` },
+      { key: 'x', label: `Take it but keep it off the record.` },
+      { key: 'x', label: `Ask a junior to do it so it isn't on you.` },
+    ], correctIdx: 0,
+  }),
+  ({ role, person, stake }) => ({
+    text: `${person[0].toUpperCase() + person.slice(1)} asks you for a commitment on ${stake} that you're not sure you can keep. As ${role}, how do you respond?`,
+    options: [
+      { key: 'x', label: `Be honest about what's realistic, then propose what you can commit to reliably.` },
+      { key: 'x', label: `Promise everything now and worry about delivery later.` },
+      { key: 'x', label: `Refuse to commit to anything to avoid risk.` },
+      { key: 'x', label: `Give a vague answer so you can't be held to it.` },
+    ], correctIdx: 0,
+  }),
+];
+
+function buildScenario(dept: string, tier: string, industry: string, ordinal: number, prevRisk: string, rand: () => number, roleTitle?: string) {
   const comps = COMPETENCIES[dept] || ['General'];
-  const competency = comps[Math.floor(rand() * comps.length)];
-  const risk = RISK_FACTORS[Math.floor(rand() * RISK_FACTORS.length)];
-  const cash = Math.floor(rand() * 900 + 100) * 1000;
-  const carry = prevRisk ? ` A prior decision left an unresolved ${prevRisk}.` : '';
-  const scenario =
-    `[${dept} · ${tier} · ${industry}] Q${ordinal}. You face a ${risk} scenario affecting ${competency}. ` +
-    `Available operating cash is $${cash.toLocaleString()} and an operational bottleneck is emerging.${carry} ` +
-    `Which course of action best protects long-range value while maintaining ${competency}?`;
-  const correctKey = ['A', 'B', 'C', 'D'][Math.floor(rand() * 4)];
-  const options = [
-    { key: 'A', label: `Prioritise immediate ${competency} stabilisation, absorbing short-term cost.` },
-    { key: 'B', label: `Escalate to leadership and defer action pending fuller data.` },
-    { key: 'C', label: `Reallocate the $${cash.toLocaleString()} to the highest-severity bottleneck first.` },
-    { key: 'D', label: `Maintain status quo and monitor the ${risk} for one cycle.` },
-  ];
-  return { scenario, options, correctKey, competency, riskFactor: risk };
+  const competency = pick(comps, rand);
+  const role = roleTitle && roleTitle.trim() ? `a ${roleTitle} (${tier})` : `a ${tier} leader in ${dept}`;
+  const ctx = {
+    role, competency,
+    person: pick(PEOPLE, rand), stake: pick(STAKES, rand), event: pick(EVENTS, rand),
+    cash: (Math.floor(rand() * 900 + 100) * 1000).toLocaleString(), r: rand,
+  };
+  // rotate templates by ordinal + randomness so consecutive Qs differ
+  const tmpl = TEMPLATES[(ordinal + Math.floor(rand() * TEMPLATES.length)) % TEMPLATES.length];
+  const built = tmpl(ctx);
+  // shuffle options so the correct answer isn't always first; track its new position
+  const correctLabel = built.options[built.correctIdx].label;
+  const shuffled = shuffle(built.options, rand);
+  const keys = ['A', 'B', 'C', 'D'];
+  const options = shuffled.map((o, i) => ({ key: keys[i], label: o.label }));
+  const correctKey = keys[shuffled.findIndex(o => o.label === correctLabel)];
+  const industryTag = industry && industry !== 'General' ? ` · ${industry}` : '';
+  const scenario = `[${competency}${industryTag}] ${built.text}`;
+  return { scenario, options, correctKey, competency, riskFactor: pick(RISK_FACTORS, rand) };
 }
 
 // ── Admin: create a 100-Q candidate session (§3, §4) ─────────────────────────
 router.post('/sessions', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { orgId, candidateName, candidateEmail, targetDepartment, targetTier, industryField } = req.body || {};
+    const { orgId, candidateName, candidateEmail, targetDepartment, targetTier, industryField, jobTitle } = req.body || {};
     if (!orgId || !targetDepartment || !targetTier) { res.status(400).json({ error: 'orgId, targetDepartment, targetTier required' }); return; }
     if (!TIERS.includes(targetTier)) { res.status(400).json({ error: 'invalid targetTier' }); return; }
     const org = await prisma.enterpriseOrg.findUnique({ where: { id: orgId } });
@@ -111,12 +248,12 @@ router.post('/sessions', authenticate, async (req: AuthRequest, res: Response): 
     const accessToken = crypto.randomBytes(20).toString('hex');
     const seed = crypto.randomBytes(8).toString('hex');
     const rand = mulberry32(seed + accessToken);
-    const trackTitle = `${targetDepartment} — ${targetTier}`;
+    const trackTitle = jobTitle && String(jobTitle).trim() ? `${jobTitle} — ${targetTier}` : `${targetDepartment} — ${targetTier}`;
 
     const qData: any[] = [];
     let prevRisk = '';
     for (let i = 1; i <= QUESTIONS_PER_EXAM; i++) {
-      const s = buildScenario(targetDepartment, targetTier, industryField || 'General', i, prevRisk, rand);
+      const s = buildScenario(targetDepartment, targetTier, industryField || 'General', i, prevRisk, rand, jobTitle);
       prevRisk = s.riskFactor; // §3.1 block N mutates N+1
       qData.push({
         ordinal: i, block: Math.ceil(i / BLOCK_SIZE), scenario: s.scenario,

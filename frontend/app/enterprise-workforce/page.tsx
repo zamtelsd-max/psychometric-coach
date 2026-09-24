@@ -9,11 +9,12 @@ const hdr = (): Record<string, string> => { const t = (typeof window !== 'undefi
 type Dept = { department: string; candidates: number; aggregateCompetenceAvg: number; projectedProductivityLossPct: number; burnoutRiskIndicator: string };
 
 export default function EnterpriseWorkforcePage() {
-  const [tax, setTax] = useState<{ departments: string[]; tiers: string[] }>({ departments: [], tiers: [] });
+  const [tax, setTax] = useState<{ departments: string[]; tiers: string[]; jobTitles: { title: string; department: string; tier: string }[] }>({ departments: [], tiers: [], jobTitles: [] });
   const [orgs, setOrgs] = useState<any[]>([]);
   const [orgId, setOrgId] = useState('');
   const [companyName, setCompanyName] = useState('');
-  const [form, setForm] = useState({ candidateName: '', candidateEmail: '', targetDepartment: '', targetTier: '', industryField: 'General' });
+  const [form, setForm] = useState({ candidateName: '', candidateEmail: '', jobTitle: '', targetDepartment: '', targetTier: '', industryField: 'General' });
+  const [generating, setGenerating] = useState(false);
   const [invite, setInvite] = useState<any>(null);
   const [report, setReport] = useState<Dept[]>([]);
   const [training, setTraining] = useState<any>(null);
@@ -22,7 +23,7 @@ export default function EnterpriseWorkforcePage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !localStorage.getItem('psy_token')) { setAuthed(false); return; }
-    fetch(`${API}/enterprise-v2/taxonomy`).then(r => r.json()).then(d => setTax({ departments: d.departments || [], tiers: d.tiers || [] })).catch(() => {});
+    fetch(`${API}/enterprise-v2/taxonomy`).then(r => r.json()).then(d => setTax({ departments: d.departments || [], tiers: d.tiers || [], jobTitles: d.jobTitles || [] })).catch(() => {});
     loadOrgs();
   }, []);
 
@@ -37,13 +38,25 @@ export default function EnterpriseWorkforcePage() {
     else setErr(d.error || 'Failed to create organization.');
   };
 
+  // Picking a job title auto-fills its department + tier (one-click ready).
+  const onPickTitle = (title: string) => {
+    const jt = tax.jobTitles.find(j => j.title === title);
+    if (jt) setForm(f => ({ ...f, jobTitle: jt.title, targetDepartment: jt.department, targetTier: jt.tier }));
+    else setForm(f => ({ ...f, jobTitle: title }));
+  };
+
   const createSession = async () => {
     setErr(''); setMsg(''); setInvite(null);
-    if (!orgId || !form.targetDepartment || !form.targetTier) { setErr('Select organization, department and tier.'); return; }
-    const r = await fetch(`${API}/enterprise-v2/sessions`, { method: 'POST', headers: hdr(), body: JSON.stringify({ orgId, ...form }) });
-    const d = await r.json();
-    if (d.success) { setInvite(d); setMsg('Assessment session created (100 questions).'); }
-    else setErr(d.error || 'Failed to create session.');
+    if (!orgId) { setErr('Select an organization first.'); return; }
+    if (!form.jobTitle && (!form.targetDepartment || !form.targetTier)) { setErr('Pick a job title to generate questions.'); return; }
+    setGenerating(true);
+    try {
+      const r = await fetch(`${API}/enterprise-v2/sessions`, { method: 'POST', headers: hdr(), body: JSON.stringify({ orgId, ...form }) });
+      const d = await r.json();
+      if (d.success) { setInvite(d); setMsg('✅ 100 unique questions generated — assessment link ready.'); }
+      else setErr(d.error || 'Failed to generate.');
+    } catch { setErr('Failed to generate. Try again.'); }
+    finally { setGenerating(false); }
   };
 
   const loadReport = async () => {
@@ -95,19 +108,40 @@ export default function EnterpriseWorkforcePage() {
       </div>
 
       <div style={card}>
-        <h3 style={{ color: BRAND, marginBottom: 12 }}>② Assign 100-Question Assessment</h3>
-        <input style={input} placeholder="Candidate name" value={form.candidateName} onChange={e => setForm({ ...form, candidateName: e.target.value })} />
-        <input style={input} placeholder="Candidate email" value={form.candidateEmail} onChange={e => setForm({ ...form, candidateEmail: e.target.value })} />
-        <select style={input} value={form.targetDepartment} onChange={e => setForm({ ...form, targetDepartment: e.target.value })}>
-          <option value="">Select department…</option>
-          {tax.departments.map(d => <option key={d} value={d}>{d}</option>)}
+        <h3 style={{ color: BRAND, marginBottom: 4 }}>② Build Assessment</h3>
+        <p style={{ color: '#64748b', fontSize: 13, marginBottom: 14 }}>Pick a job title — department &amp; tier fill in automatically — then generate 100 unique questions in one click.</p>
+
+        <label className="pc-label">Job title</label>
+        <select style={{ ...input, fontWeight: 600 }} value={form.jobTitle} onChange={e => onPickTitle(e.target.value)}>
+          <option value="">— Select a job title —</option>
+          {tax.departments.map(dep => (
+            <optgroup key={dep} label={dep}>
+              {tax.jobTitles.filter(j => j.department === dep).map(j => (
+                <option key={j.title} value={j.title}>{j.title} · {j.tier}</option>
+              ))}
+            </optgroup>
+          ))}
         </select>
-        <select style={input} value={form.targetTier} onChange={e => setForm({ ...form, targetTier: e.target.value })}>
-          <option value="">Select corporate tier…</option>
-          {tax.tiers.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
-        <input style={input} placeholder="Industry field (e.g. Telecom, Banking)" value={form.industryField} onChange={e => setForm({ ...form, industryField: e.target.value })} />
-        <button style={btn} onClick={createSession}>Generate Assessment Link</button>
+
+        {form.jobTitle && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '2px 0 12px' }}>
+            <span className="pc-badge pc-badge-brand">{form.targetDepartment}</span>
+            <span className="pc-badge pc-badge-gold">{form.targetTier}</span>
+          </div>
+        )}
+
+        <details style={{ marginBottom: 12 }}>
+          <summary style={{ cursor: 'pointer', fontSize: 13, color: '#64748b', fontWeight: 600 }}>Optional: candidate details &amp; industry</summary>
+          <div style={{ marginTop: 10 }}>
+            <input style={input} placeholder="Candidate name (optional)" value={form.candidateName} onChange={e => setForm({ ...form, candidateName: e.target.value })} />
+            <input style={input} placeholder="Candidate email (optional)" value={form.candidateEmail} onChange={e => setForm({ ...form, candidateEmail: e.target.value })} />
+            <input style={input} placeholder="Industry (e.g. Telecom, Banking)" value={form.industryField} onChange={e => setForm({ ...form, industryField: e.target.value })} />
+          </div>
+        </details>
+
+        <button style={{ ...btn, width: '100%', padding: '13px', opacity: generating ? 0.6 : 1 }} disabled={generating || !form.jobTitle} onClick={createSession}>
+          {generating ? 'Generating 100 questions…' : '⚡ Generate Questions (one click)'}
+        </button>
         {invite && (
           <div style={{ marginTop: 14, padding: 14, background: '#f1f5f9', borderRadius: 10 }}>
             <b>Assessment link ({invite.totalQuestions} questions):</b>

@@ -183,22 +183,104 @@ function ukBand(acc: number, track: string): string {
 // FE-05/FE-07 Engineering Sandbox grading — AST heuristics + circuit netlist +
 // unit tests + tiered hints. Individual "Zambian Smart Farm" style challenge.
 // ════════════════════════════════════════════════════════════════════════════
-const CHALLENGES: Record<string, any> = {
+// Each challenge declares: an input variable + threshold, an actuator, required
+// hardware/wiring, budget, hints, and unit tests. A generic simulator reads the
+// candidate's `if <input> <op> <N>: <actuator> ON` intent and evaluates it.
+type Challenge = {
+  id: string; title: string; brief: string; difficulty: string;
+  inputVar: string; inputLabel: string; inputUnit: string;
+  actuator: string; actuatorLabel: string;
+  op: '<' | '>'; // actuator turns ON when input <op> threshold
+  requiredComponents: string[]; requiredWires: string[][]; budgetZMW: number;
+  codeMustInclude: string[];
+  unitTests: { input: number; expectOn: boolean }[];
+  hints: Record<number, string>;
+  needsResistorFor?: string; // safety: this actuator needs a resistor
+};
+
+// Component costs (ZMW) — mirrors the frontend palette for budget checks.
+const COMPONENT_COST: Record<string, number> = {
+  pico: 250, moisture_probe: 120, temp_sensor: 130, relay: 90, pump: 180, resistor: 15,
+  solar: 200, battery: 160, transistor: 25, fan: 150, red_led: 20, green_led: 20, button: 30,
+};
+
+const CHALLENGES: Record<string, Challenge> = {
   smartfarm: {
-    id: 'smartfarm', title: 'Zambian Smart Farm — Automated Irrigation',
-    brief: 'Wire a moisture probe to the Pico and write MicroPython so the pump runs only when soil moisture is below 30%. Keep within ZMW 850 budget and protect components with a resistor on the relay line.',
+    id: 'smartfarm', title: 'Zambian Smart Farm — Automated Irrigation', difficulty: 'Beginner',
+    brief: 'Wire a moisture probe to the Pico and write MicroPython so the pump runs only when soil moisture is below 30%. Keep within ZMW 850 and protect the relay with a resistor.',
+    inputVar: 'moisture', inputLabel: 'Soil moisture', inputUnit: '%',
+    actuator: 'pump', actuatorLabel: 'Water pump', op: '<',
     requiredComponents: ['pico', 'moisture_probe', 'relay', 'pump', 'resistor'],
     requiredWires: [['moisture_probe', 'pico'], ['pico', 'relay'], ['relay', 'pump']],
-    budgetZMW: 850,
-    codeMustInclude: ['machine', 'ADC', 'Pin', 'if', '30'],
-    unitTests: [{ moisture: 20, expectPump: true }, { moisture: 60, expectPump: false }],
+    budgetZMW: 850, codeMustInclude: ['ADC', 'Pin', 'if', '30'], needsResistorFor: 'relay',
+    unitTests: [{ input: 20, expectOn: true }, { input: 60, expectOn: false }, { input: 30, expectOn: false }],
+    hints: {
+      1: 'Check your ground connections — the moisture probe must share a common ground with the Pico.',
+      2: 'Read the ADC on the probe pin and switch the relay only when moisture < 30%. Relay on its own GPIO pin.',
+      3: 'Pseudo-code:\n  adc = ADC(Pin(26))\n  while True:\n    moisture = adc.read_u16()/65535*100\n    relay.value(1 if moisture < 30 else 0)',
+    },
+  },
+  trafficlight: {
+    id: 'trafficlight', title: 'Traffic Light Controller', difficulty: 'Beginner',
+    brief: 'Build a pedestrian crossing: when the button count reaches 1 (pressed), turn the RED light on for cars. Wire button → Pico → LEDs.',
+    inputVar: 'button', inputLabel: 'Button state (0/1)', inputUnit: '',
+    actuator: 'red_led', actuatorLabel: 'Red LED', op: '>',
+    requiredComponents: ['pico', 'button', 'red_led', 'green_led', 'resistor'],
+    requiredWires: [['button', 'pico'], ['pico', 'red_led'], ['pico', 'green_led']],
+    budgetZMW: 500, codeMustInclude: ['Pin', 'if', 'button'], needsResistorFor: 'red_led',
+    unitTests: [{ input: 1, expectOn: true }, { input: 0, expectOn: false }],
+    hints: {
+      1: 'An LED needs a current-limiting resistor in series or it will burn out.',
+      2: 'Read the button pin; when button == 1, set the red LED high and green low.',
+      3: 'Pseudo-code:\n  if button > 0:\n    red_led.value(1); green_led.value(0)\n  else:\n    red_led.value(0); green_led.value(1)',
+    },
+  },
+  tempfan: {
+    id: 'tempfan', title: 'Temperature-Triggered Cooling Fan', difficulty: 'Intermediate',
+    brief: 'A server room fan must switch ON when temperature rises above 28°C. Wire a temperature sensor to the Pico and drive the fan through a transistor with a resistor.',
+    inputVar: 'temperature', inputLabel: 'Temperature', inputUnit: '°C',
+    actuator: 'fan', actuatorLabel: 'Cooling fan', op: '>',
+    requiredComponents: ['pico', 'temp_sensor', 'transistor', 'fan', 'resistor'],
+    requiredWires: [['temp_sensor', 'pico'], ['pico', 'transistor'], ['transistor', 'fan']],
+    budgetZMW: 700, codeMustInclude: ['ADC', 'Pin', 'if', '28'], needsResistorFor: 'transistor',
+    unitTests: [{ input: 32, expectOn: true }, { input: 24, expectOn: false }, { input: 28, expectOn: false }],
+    hints: {
+      1: 'The transistor base needs a resistor, and the sensor needs a common ground with the Pico.',
+      2: 'Convert the ADC reading to °C, then switch the transistor when temperature > 28.',
+      3: 'Pseudo-code:\n  temp = read_temp()\n  transistor.value(1 if temp > 28 else 0)',
+    },
+  },
+  solarcharge: {
+    id: 'solarcharge', title: 'Solar Battery Charge Monitor', difficulty: 'Intermediate',
+    brief: 'Protect a solar battery: switch the charge relay OFF (cut off) when battery voltage rises above 95% to prevent overcharge. Use an LED to show charging.',
+    inputVar: 'charge', inputLabel: 'Battery charge', inputUnit: '%',
+    actuator: 'relay', actuatorLabel: 'Charge relay (ON = charging)', op: '<',
+    requiredComponents: ['pico', 'solar', 'relay', 'battery', 'resistor'],
+    requiredWires: [['solar', 'relay'], ['relay', 'battery'], ['pico', 'relay']],
+    budgetZMW: 950, codeMustInclude: ['if', '95', 'value'], needsResistorFor: 'relay',
+    unitTests: [{ input: 80, expectOn: true }, { input: 98, expectOn: false }, { input: 95, expectOn: false }],
+    hints: {
+      1: 'Overcharging damages batteries — the relay must cut off above 95%.',
+      2: 'Keep the relay ON (charging) only while charge < 95%, otherwise open it.',
+      3: 'Pseudo-code:\n  relay.value(1 if charge < 95 else 0)',
+    },
   },
 };
+
+// List all challenges (for the sandbox challenge picker)
+router.get('/sandbox', (_req: Request, res: Response): void => {
+  res.json({ success: true, challenges: Object.values(CHALLENGES).map(c => ({ id: c.id, title: c.title, difficulty: c.difficulty, brief: c.brief })) });
+});
 
 router.get('/sandbox/:id', (req: Request, res: Response): void => {
   const c = CHALLENGES[req.params.id];
   if (!c) { res.status(404).json({ error: 'challenge not found' }); return; }
-  res.json({ success: true, challenge: { id: c.id, title: c.title, brief: c.brief, requiredComponents: c.requiredComponents, budgetZMW: c.budgetZMW } });
+  res.json({ success: true, challenge: {
+    id: c.id, title: c.title, brief: c.brief, difficulty: c.difficulty,
+    requiredComponents: c.requiredComponents, budgetZMW: c.budgetZMW,
+    inputVar: c.inputVar, inputLabel: c.inputLabel, inputUnit: c.inputUnit,
+    actuator: c.actuator, actuatorLabel: c.actuatorLabel, op: c.op,
+  } });
 });
 
 // Tiered hint engine (FE-07)
@@ -206,12 +288,7 @@ router.post('/sandbox/:id/hint', (req: Request, res: Response): void => {
   const c = CHALLENGES[req.params.id];
   if (!c) { res.status(404).json({ error: 'not found' }); return; }
   const level = Math.max(1, Math.min(3, Number(req.body?.level) || 1));
-  const hints: Record<number, string> = {
-    1: 'Check your ground connections and make sure the moisture probe shares a common ground with the Pico.',
-    2: 'Your logic must read the ADC on the probe pin and switch the relay only when moisture < 30%. Verify the relay is on a separate GPIO pin.',
-    3: 'Pseudo-code:\n  adc = ADC(Pin(26))\n  while True:\n    moisture = adc.read_u16() / 65535 * 100\n    relay.value(1 if moisture < 30 else 0)\n    sleep(1)',
-  };
-  res.json({ success: true, level, hint: hints[level] });
+  res.json({ success: true, level, hint: c.hints[level] });
 });
 
 // Grade a sandbox submission (AST heuristics + netlist + unit tests)
@@ -229,8 +306,7 @@ router.post('/sandbox/:id/submit', async (req: Request, res: Response): Promise<
     const hasKeywords = c.codeMustInclude.filter((k: string) => codeStr.includes(k)).length;
     let astScore = Math.round((hasKeywords / c.codeMustInclude.length) * 60 + (hasLoop ? 20 : 0) + (hasCond ? 20 : 0));
     astScore = Math.min(100, astScore);
-    if (!hasLoop) feedback.push('No control loop detected — the farm must poll the sensor continuously.');
-    if (!hasCond) feedback.push('No conditional (if) — pump must switch based on the moisture threshold.');
+    if (!hasCond) feedback.push(`No conditional (if) — the ${c.actuatorLabel} must switch on a threshold.`);
 
     // 2) Circuit netlist topology check + safety
     const comps: string[] = (circuit.components || []).map((x: any) => x.type || x);
@@ -239,26 +315,28 @@ router.post('/sandbox/:id/submit', async (req: Request, res: Response): Promise<
     const wireOk = c.requiredWires.filter((rw: string[]) =>
       wires.some(w => (w[0] === rw[0] && w[1] === rw[1]) || (w[0] === rw[1] && w[1] === rw[0]))).length;
     let circuitScore = Math.round((compOk / c.requiredComponents.length) * 50 + (wireOk / c.requiredWires.length) * 50);
-    // safety: relay without resistor → overcurrent
-    if (comps.includes('relay') && !comps.includes('resistor')) {
+    // safety: high-current actuator without a resistor → overcurrent
+    if (c.needsResistorFor && comps.includes(c.needsResistorFor) && !comps.includes('resistor')) {
       circuitScore = Math.max(0, circuitScore - 25);
-      feedback.push('⚠ Component Blown: Overcurrent detected — add a resistor on the relay line.');
+      feedback.push(`⚠ Component Blown: Overcurrent detected — add a resistor on the ${c.needsResistorFor} line.`);
     }
     if (compOk < c.requiredComponents.length) feedback.push(`Missing components: ${c.requiredComponents.filter((rc: string) => !comps.includes(rc)).join(', ')}`);
+    // budget check
+    const spent = comps.reduce((s, t) => s + (COMPONENT_COST[t] || 0), 0);
+    if (spent > c.budgetZMW) feedback.push(`⚠ Over budget: ZMW ${spent} spent (limit ${c.budgetZMW}).`);
 
-    // 3) Unit tests (simulate pump logic against thresholds via code intent)
-    const readsThreshold = codeStr.includes('30');
+    // 3) Unit tests — actually run the candidate's logic
     let unitPass = 0;
     for (const t of c.unitTests) {
-      const predictedPump = readsThreshold && hasCond ? (t.moisture < 30) : false;
-      if (predictedPump === t.expectPump) unitPass++;
+      const r = runChallengeLogic(c, codeStr, t.input);
+      if (!r.error && r.on === t.expectOn) unitPass++;
     }
     const unitScore = Math.round((unitPass / c.unitTests.length) * 100);
 
     const total = Math.round(astScore * 0.34 + circuitScore * 0.33 + unitScore * 0.33) - hintsUsed * 3;
     const finalTotal = Math.max(0, Math.min(100, total));
-    const passed = finalTotal >= 70 && circuitScore >= 50;
-    if (passed) feedback.unshift('✅ Irrigation system operates safely and efficiently within budget.');
+    const passed = finalTotal >= 70 && circuitScore >= 50 && spent <= c.budgetZMW;
+    if (passed) feedback.unshift(`✅ ${c.title} works safely and efficiently within budget.`);
 
     await prisma.sandboxSubmission.create({
       data: { challengeId: c.id, code: codeStr.slice(0, 20000), circuit, astScore, circuitScore, unitScore, totalScore: finalTotal, passed, hintsUsed: Number(hintsUsed) || 0, feedback },
@@ -268,37 +346,38 @@ router.post('/sandbox/:id/submit', async (req: Request, res: Response): Promise<
   } catch (e) { console.error('sandbox submit', e); res.status(500).json({ error: 'failed' }); }
 });
 
-// ── Real code execution (safe MicroPython-subset simulator) ──────────────────
-// Runs the candidate's pump-control logic against moisture inputs in a sandboxed
-// JS evaluation with a strict watchdog (no imports, no I/O, iteration cap).
-function runIrrigationLogic(code: string, moisture: number): { pumpOn: boolean; error?: string } {
-  // Reject obviously malicious / disallowed constructs (defence in depth).
+// ── Real code execution (safe MicroPython-subset simulator, generic) ─────────
+// Extracts the candidate's `if <inputVar> <op> <N>: <actuator> ON` intent and
+// evaluates it against each unit-test input. Watchdog blocks imports/IO.
+function runChallengeLogic(c: Challenge, code: string, input: number): { on: boolean; error?: string } {
   if (/\b(exec|eval|open|__import__|os\.|sys\.|subprocess|socket|requests)\b/.test(code)) {
-    return { pumpOn: false, error: 'Blocked import/IO detected' };
+    return { on: false, error: 'Blocked import/IO detected' };
   }
-  // Translate the candidate's threshold intent: find the numeric compare against moisture.
-  // We interpret the common pattern:  if moisture < N: pump ON.
-  const m = code.match(/moisture\s*<\s*(\d+(?:\.\d+)?)/);
-  if (!m) return { pumpOn: false, error: 'No moisture threshold comparison found' };
-  const threshold = parseFloat(m[1]);
-  // Detect that relay.value(1)/ON is tied to the low-moisture branch.
-  const turnsOnWhenLow = /<\s*\d/.test(code) && /(relay\.value\(1\)|pump\s*=\s*True|relay\.on\(\)|value\(1\))/.test(code);
-  if (!turnsOnWhenLow) return { pumpOn: false, error: 'Pump is not switched on in the low-moisture branch' };
-  return { pumpOn: moisture < threshold };
+  // find comparison against the input variable: e.g. moisture < 30, temperature > 28
+  const cmp = new RegExp(`${c.inputVar}\\s*(<|>|<=|>=)\\s*(\\d+(?:\\.\\d+)?)`);
+  const m = code.match(cmp);
+  if (!m) return { on: false, error: `No comparison on '${c.inputVar}' found` };
+  const op = m[1]; const threshold = parseFloat(m[2]);
+  // actuator must be driven high somewhere
+  const drivesOn = new RegExp(`(${c.actuator}\\.value\\(1\\)|${c.actuator}\\.on\\(\\)|${c.actuator}\\s*=\\s*True|value\\(1\\))`).test(code);
+  if (!drivesOn) return { on: false, error: `${c.actuatorLabel} is never switched on` };
+  const cmpEval = (v: number) => op === '<' ? v < threshold : op === '>' ? v > threshold : op === '<=' ? v <= threshold : v >= threshold;
+  return { on: cmpEval(input) };
 }
 
 router.post('/sandbox/:id/execute', (req: Request, res: Response): void => {
   const c = CHALLENGES[req.params.id];
   if (!c) { res.status(404).json({ error: 'not found' }); return; }
   const code = String(req.body?.code || '');
-  const runs = c.unitTests.map((t: any) => {
-    const r = runIrrigationLogic(code, t.moisture);
-    return { moisture: t.moisture, expected: t.expectPump, got: r.pumpOn, pass: r.error ? false : r.pumpOn === t.expectPump, error: r.error };
+  const runs = c.unitTests.map((t) => {
+    const r = runChallengeLogic(c, code, t.input);
+    return { input: t.input, expected: t.expectOn, got: r.on, pass: r.error ? false : r.on === t.expectOn, error: r.error };
   });
-  const passed = runs.filter((r: any) => r.pass).length;
-  const terminal = runs.map((r: any) =>
-    r.error ? `moisture=${r.moisture}%  →  ERROR: ${r.error}`
-            : `moisture=${r.moisture}%  →  pump ${r.got ? 'ON' : 'OFF'}  ${r.pass ? '✓' : '✗ (expected ' + (r.expected ? 'ON' : 'OFF') + ')'}`
+  const passed = runs.filter(r => r.pass).length;
+  const u = c.inputUnit;
+  const terminal = runs.map(r =>
+    r.error ? `${c.inputVar}=${r.input}${u}  →  ERROR: ${r.error}`
+            : `${c.inputVar}=${r.input}${u}  →  ${c.actuator} ${r.got ? 'ON' : 'OFF'}  ${r.pass ? '✓' : '✗ (expected ' + (r.expected ? 'ON' : 'OFF') + ')'}`
   ).join('\n');
   res.json({ success: true, passed, total: runs.length, runs, terminal });
 });

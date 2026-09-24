@@ -24,6 +24,7 @@ export default function DashboardPage() {
   const [studyPlan, setStudyPlan] = useState<StudyTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [doneTasks, setDoneTasks] = useState<string[]>([]);
+  const [learn, setLearn] = useState<any>(null);
 
   useEffect(() => {
     Promise.all([profileApi.get(), profileApi.studyPlan(), attemptsApi.stats()])
@@ -33,6 +34,10 @@ export default function DashboardPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+    // learning progress (Growth Center)
+    const API = process.env.NEXT_PUBLIC_API_URL || 'https://http--psychometric-api--x7m7kyc8mh8j.code.run/api/v1';
+    const t = (typeof window !== 'undefined' && localStorage.getItem('psy_token')) || '';
+    fetch(`${API}/learning/stats`, { headers: { Authorization: `Bearer ${t}` } }).then(r => r.json()).then(d => { if (d.ok) setLearn(d); }).catch(() => {});
   }, []);
 
   const score = profile?.user?.readinessScore ?? user?.readinessScore ?? 0;
@@ -56,6 +61,28 @@ export default function DashboardPage() {
           <span className="text-sm font-bold text-amber-700">{user.streakDays}d streak</span>
         </div>}
       </div>
+
+      {/* Growth Center progress */}
+      {learn && (
+        <div className="pc-card mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold text-gray-900">🧠 Growth Center progress</h2>
+            <a href="/learning" className="text-sm font-bold" style={{ color: '#C99A2E' }}>Continue →</a>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+            {[['Modules', `${learn.modulesCompleted}/${learn.totalModules}`], ['Quizzes taken', learn.quizzesTaken], ['Avg quiz', `${learn.quizAvgScore}%`], ['XP', learn.xpPoints]].map(([l, v]: any) => (
+              <div key={l} className="rounded-xl p-3 text-center" style={{ background: '#f1f5f9' }}>
+                <div className="text-xl font-black" style={{ color: '#16335B' }}>{v}</div>
+                <div className="text-xs text-gray-500">{l}</div>
+              </div>
+            ))}
+          </div>
+          <div className="h-2 rounded-full" style={{ background: '#e2e8f0' }}>
+            <div className="h-full rounded-full" style={{ width: `${learn.completionPct}%`, background: '#C99A2E', transition: 'width .6s' }} />
+          </div>
+          <p className="text-xs text-gray-500 mt-1">{learn.completionPct}% of modules complete{learn.perfectScores ? ` · ${learn.perfectScores} perfect quiz${learn.perfectScores > 1 ? 'zes' : ''} 🏆` : ''}</p>
+        </div>
+      )}
 
       {/* Readiness Score */}
       <div className="pc-card mb-4 flex items-center gap-6">

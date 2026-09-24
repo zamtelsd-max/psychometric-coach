@@ -89,6 +89,8 @@ export default function LearningPage() {
                 .growth-content details.quiz { background:rgba(212,175,55,.10); border:1px solid rgba(212,175,55,.3); border-radius:10px; padding:10px 14px; margin:14px 0; }
                 .growth-content details.quiz summary { cursor:pointer; font-weight:700; color:${GOLD}; }
                 .growth-content details.quiz > div { margin-top:8px; color:#cbd5e1; }
+                .growth-content figure.diagram { margin:16px 0; padding:14px; background:rgba(11,20,32,.6); border:1px solid rgba(148,163,184,.2); border-radius:12px; }
+                .growth-content figure.diagram figcaption { text-align:center; color:#94a3b8; font-size:12px; margin-top:8px; font-style:italic; }
               `}</style>
               {quiz && (
                 <div style={{ marginTop: 20, borderTop: '1px solid rgba(255,255,255,.1)', paddingTop: 16 }}>

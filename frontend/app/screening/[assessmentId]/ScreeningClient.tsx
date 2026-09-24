@@ -31,12 +31,21 @@ export default function ScreeningClient() {
   const [demoStats, setDemoStats] = useState<{ faces: number; ever: boolean; streak: number } | null>(null);
   const [demoFeed, setDemoFeed] = useState<{ type: string; alert: boolean; at: string }[]>([]);
 
-  // read id + token from URL
+  // read id + token from URL. Prefer combined ?k=<id>.<token> (SPA-safe, no '&' lost on paste),
+  // else ?id=&t=, else /screening/<id>?t= path. GitHub Pages static host has no path routing.
   useEffect(() => {
-    const parts = window.location.pathname.split('/');
-    setId(parts[parts.indexOf('screening') + 1] || '');
     const params = new URLSearchParams(window.location.search);
-    setToken(params.get('t') || '');
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    const pathSeg = parts[parts.indexOf('screening') + 1] || '';
+    const combined = params.get('k') || '';
+    if (combined && combined.includes('.')) {
+      const dot = combined.indexOf('.');
+      setId(combined.slice(0, dot));
+      setToken(combined.slice(dot + 1));
+    } else {
+      setId(params.get('id') || (pathSeg && pathSeg !== 'entry' ? pathSeg : ''));
+      setToken(params.get('t') || '');
+    }
     setIsDemo(params.get('demo') === '1');
   }, []);
 

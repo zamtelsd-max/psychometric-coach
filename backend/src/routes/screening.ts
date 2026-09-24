@@ -39,7 +39,7 @@ router.post('/assessments', authenticate, async (req: AuthRequest, res: Response
     },
     include: { questions: true },
   });
-  const link = `https://www.psychometriccoach.com/screening/${assessment.id}?t=${candidateToken}`;
+  const link = `https://www.psychometriccoach.com/screening/entry/?k=${assessment.id}.${candidateToken}`;
   res.json({ success: true, assessmentId: assessment.id, candidateToken, inviteLink: link, questions: assessment.questions.length });
 });
 

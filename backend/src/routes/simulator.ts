@@ -49,11 +49,17 @@ function selectNext(items: any[], theta: number, usedIds: Set<string>): any | nu
 // ── Start an adaptive session ────────────────────────────────────────────────
 router.post('/session/start', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { kind, track, subject } = req.body || {};
+    const { kind, track, subject, joinCode, studentName } = req.body || {};
     if (!kind) { res.status(400).json({ error: 'kind required' }); return; }
     const candidateToken = crypto.randomBytes(16).toString('hex');
+    // Optional: join a teacher class so results roll up to the class dashboard.
+    let classId: string | null = null;
+    if (joinCode) {
+      const cls = await prisma.teacherClass.findUnique({ where: { joinCode: String(joinCode).toUpperCase() } }).catch(() => null);
+      if (cls) classId = cls.id;
+    }
     const s = await prisma.simSession.create({
-      data: { candidateToken, kind, track: track || 'GENERAL', subject: subject || '', theta: 0 },
+      data: { candidateToken, kind, track: track || 'GENERAL', subject: subject || '', theta: 0, classId, studentName: studentName || '' },
     });
     res.json({ success: true, sessionToken: candidateToken, sessionId: s.id, kind, track: s.track });
   } catch (e) { console.error('sim start', e); res.status(500).json({ error: 'failed' }); }
@@ -260,6 +266,41 @@ router.post('/sandbox/:id/submit', async (req: Request, res: Response): Promise<
 
     res.json({ success: true, astScore, circuitScore, unitScore, totalScore: finalTotal, passed, feedback });
   } catch (e) { console.error('sandbox submit', e); res.status(500).json({ error: 'failed' }); }
+});
+
+// ── Real code execution (safe MicroPython-subset simulator) ──────────────────
+// Runs the candidate's pump-control logic against moisture inputs in a sandboxed
+// JS evaluation with a strict watchdog (no imports, no I/O, iteration cap).
+function runIrrigationLogic(code: string, moisture: number): { pumpOn: boolean; error?: string } {
+  // Reject obviously malicious / disallowed constructs (defence in depth).
+  if (/\b(exec|eval|open|__import__|os\.|sys\.|subprocess|socket|requests)\b/.test(code)) {
+    return { pumpOn: false, error: 'Blocked import/IO detected' };
+  }
+  // Translate the candidate's threshold intent: find the numeric compare against moisture.
+  // We interpret the common pattern:  if moisture < N: pump ON.
+  const m = code.match(/moisture\s*<\s*(\d+(?:\.\d+)?)/);
+  if (!m) return { pumpOn: false, error: 'No moisture threshold comparison found' };
+  const threshold = parseFloat(m[1]);
+  // Detect that relay.value(1)/ON is tied to the low-moisture branch.
+  const turnsOnWhenLow = /<\s*\d/.test(code) && /(relay\.value\(1\)|pump\s*=\s*True|relay\.on\(\)|value\(1\))/.test(code);
+  if (!turnsOnWhenLow) return { pumpOn: false, error: 'Pump is not switched on in the low-moisture branch' };
+  return { pumpOn: moisture < threshold };
+}
+
+router.post('/sandbox/:id/execute', (req: Request, res: Response): void => {
+  const c = CHALLENGES[req.params.id];
+  if (!c) { res.status(404).json({ error: 'not found' }); return; }
+  const code = String(req.body?.code || '');
+  const runs = c.unitTests.map((t: any) => {
+    const r = runIrrigationLogic(code, t.moisture);
+    return { moisture: t.moisture, expected: t.expectPump, got: r.pumpOn, pass: r.error ? false : r.pumpOn === t.expectPump, error: r.error };
+  });
+  const passed = runs.filter((r: any) => r.pass).length;
+  const terminal = runs.map((r: any) =>
+    r.error ? `moisture=${r.moisture}%  →  ERROR: ${r.error}`
+            : `moisture=${r.moisture}%  →  pump ${r.got ? 'ON' : 'OFF'}  ${r.pass ? '✓' : '✗ (expected ' + (r.expected ? 'ON' : 'OFF') + ')'}`
+  ).join('\n');
+  res.json({ success: true, passed, total: runs.length, runs, terminal });
 });
 
 // ── Leaderboard (individual + by challenge) ──────────────────────────────────

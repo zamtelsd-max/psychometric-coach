@@ -950,6 +950,8 @@ model SimBank {
 model SimSession {
   id           String   @id @default(cuid())
   userId       String?
+  classId      String?
+  studentName  String   @default("")
   candidateToken String @unique
   kind         String
   track        String   @default("GENERAL")
@@ -987,5 +989,20 @@ model SandboxSubmission {
 
   @@index([challengeId])
   @@map("sandbox_submissions")
+  @@schema("pc")
+}
+
+// Teacher automation suite (FE-07): classes, membership, auto-aggregated gaps.
+model TeacherClass {
+  id         String   @id @default(cuid())
+  teacherId  String
+  name       String
+  track      String   @default("ZM_ECZ")
+  subject    String   @default("")
+  joinCode   String   @unique
+  createdAt  DateTime @default(now())
+
+  @@index([teacherId])
+  @@map("teacher_classes")
   @@schema("pc")
 }
